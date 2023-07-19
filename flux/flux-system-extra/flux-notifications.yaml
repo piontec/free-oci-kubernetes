@@ -1,0 +1,39 @@
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Provider
+metadata:
+  name: slack
+  namespace: flux-system
+spec:
+  type: slack
+  channel: flux
+  secretRef:
+    name: slack-flux-notification-url
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Provider
+metadata:
+  name: alertmanager
+  namespace: flux-system
+spec:
+  type: alertmanager
+  address: http://kube-prometheus-stack-alertmanager.kube-system.svc:9093/
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Alert
+metadata:
+  name: default-catchall
+  namespace: flux-system
+spec:
+  providerRef:
+    name: slack
+  eventSeverity: info
+  eventSources:
+    - kind: GitRepository
+      name: '*'
+    - kind: Kustomization
+      name: '*'
+    - kind: HelmRepository
+      name: '*'
+    - kind: HelmRelease
+      name: '*'

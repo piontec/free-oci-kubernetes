@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: monitoring
+resources:
+  - namespace.yaml
+  - prometheus-community-helmrepo.yaml
+  - kube-prometheus-stack.yaml
+  - prom-stack-grafana-pass-secret.yaml
+  - alertmanager-slack-api-secret.yaml
+  - metrics-server-helmrelease.yaml
+  - metrics-server-helmrepo.yaml
+  - flux-gitrepo.yaml
+  - flux-monitoring-config-kustomization.yaml

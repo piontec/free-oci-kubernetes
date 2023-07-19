@@ -1,0 +1,52 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: gitops-dashboard
+  namespace: flux-system
+spec:
+  interval: 1h0m0s
+  provider: generic
+  timeout: 60s
+  url: https://helm.gitops.weave.works
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: gitops-dashboard
+  namespace: flux-system
+spec:
+  chart:
+    spec:
+      chart: weave-gitops
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: gitops-dashboard
+      version: '*'
+  interval: 1h0m0s
+  valuesFrom:
+    - kind: Secret
+      name: gitops-dashboard-password-hash
+  values:
+    rbac:
+      impersonationResourceNames:
+        - admin
+    metrics:
+      enabled: true
+    adminUser:
+      create: true
+      username: admin
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: gitops-dashboard
+spec:
+  endpoints:
+  - path: /metrics
+    port: http-metrics
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: weave-gitops
+

@@ -1,0 +1,26 @@
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Provider
+metadata:
+  name: oci-infra-repo
+  namespace: flux-system
+spec:
+  # provider type can be github or gitlab
+  type: github
+  address: https://github.com/piontec/oci-infra
+  secretRef:
+    name: github-api-secret
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Alert
+metadata:
+  name: flux-system-kustomization
+  namespace: flux-system
+spec:
+  providerRef:
+    name: oci-infra-repo
+  eventSeverity: info
+  eventSources:
+    - kind: Kustomization
+      name: flux-system
+      namespace: flux-system
