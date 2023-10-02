@@ -8,12 +8,12 @@ spec:
   chart:
     spec:
       chart: kube-prometheus-stack
-      version: '48.x'
+      version: '51.x'
       sourceRef:
         kind: HelmRepository
         name: prometheus-community
   install:
-    crds: Create
+    crds: CreateReplace
   upgrade:
     crds: CreateReplace
   valuesFrom:
@@ -39,6 +39,8 @@ spec:
             memory: 200Mi
     defaultRules:
       create: true
+      disabled:
+        KubeletDown: true
       rules:
         alertmanager: true
         etcd: false
