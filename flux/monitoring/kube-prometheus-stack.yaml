@@ -39,6 +39,8 @@ spec:
             memory: 200Mi
     defaultRules:
       create: true
+      disabled:
+        KubeletDown: true
       rules:
         alertmanager: true
         etcd: false
