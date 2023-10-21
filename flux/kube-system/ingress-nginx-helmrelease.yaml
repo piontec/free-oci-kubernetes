@@ -30,4 +30,4 @@ spec:
         annotations:
           # based on: https://github.com/oracle/oci-cloud-controller-manager/blob/master/docs/load-balancer-annotations.md
           oci.oraclecloud.com/load-balancer-type: "nlb"
-          oci-network-load-balancer.oraclecloud.com/security-list-management-mode: "All"
+          oci-network-load-balancer.oraclecloud.com/security-list-management-mode: "None"
