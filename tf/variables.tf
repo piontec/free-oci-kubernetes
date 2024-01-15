@@ -1,7 +1,7 @@
 variable "k8s_version" {
   type        = string
   description = "k8s version"
-  default     = "v1.27.2"
+  default     = "v1.28.2"
 }
 variable "arm_pool_count" {
   type        = number
@@ -22,9 +22,9 @@ variable "arm_pool_images" {
   type        = list(string)
   description = "ready images for ARM pools"
   default = [
-    # Oracle-Linux-8.8-aarch64-2023.09.26-0-OKE-1.27.2-648
-    "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaav3ywxq3w4xbxoymp4louvugs4m5zcumqhwopwvhqlf5io7hprbwa",
-    # Oracle-Linux-8.8-aarch64-2023.09.26-0-OKE-1.27.2-648
-    "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaav3ywxq3w4xbxoymp4louvugs4m5zcumqhwopwvhqlf5io7hprbwa",
+    # "Oracle-Linux-8.8-aarch64-2023.09.26-0-OKE-1.28.2-653"
+    "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaawo2geurhrh2tgdrxmauzfffny3t4cc66rpdtk6rjrugwro4igfbq",
+    # "Oracle-Linux-8.8-aarch64-2023.09.26-0-OKE-1.28.2-653"
+    "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaawo2geurhrh2tgdrxmauzfffny3t4cc66rpdtk6rjrugwro4igfbq",
   ]
 }
