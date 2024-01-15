@@ -7,5 +7,4 @@ spec:
   interval: 1h
   ref:
     branch: main
-  url: https://github.com/fluxcd/flux2
-
+  url: https://github.com/fluxcd/flux2-monitoring-example
