@@ -11,3 +11,6 @@ resources:
   - metrics-server-helmrepo.yaml
   - flux-gitrepo.yaml
   - flux-monitoring-config-kustomization.yaml
+  - kube-echo.yaml
+  - ingress-nginx-grafana-dashboard.yaml
+  - ./loki/

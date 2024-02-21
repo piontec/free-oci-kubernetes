@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-echo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kube-echo
+  template:
+    metadata:
+      labels:
+        app: kube-echo
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: "kubernetes.io/hostname"
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - kube-echo
+      containers:
+        - name: kube-echo
+          image: ghcr.io/piontec/kube-echo:v0.1.1
+          ports:
+            - containerPort: 7777
+              protocol: UDP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-echo
+spec:
+  type: NodePort
+  ports:
+    - port: 7777
+      targetPort: 7777
+      protocol: UDP
+      nodePort: 32493
+
+  selector:
+    app: kube-echo
+

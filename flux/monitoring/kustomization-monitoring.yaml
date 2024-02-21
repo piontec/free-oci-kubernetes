@@ -6,8 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
-  - name: flux-system
-  - name: kube-system-extra
+    - name: kube-system-extra
   interval: 1h
   path: ./flux/monitoring
   prune: true
@@ -18,4 +17,3 @@ spec:
     provider: sops
     secretRef:
       name: sops-gpg
-
