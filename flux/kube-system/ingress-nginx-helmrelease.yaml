@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: ingress-nginx
-      version: '>=4.8.0'
+      version: ">=4.8.0"
       sourceRef:
         kind: HelmRepository
         name: nginx-ingress
@@ -17,6 +17,8 @@ spec:
     - kind: ConfigMap
       name: ingress-secgroup-oidc
   values:
+    metrics:
+      enabled: true
     # based on https://github.com/kubernetes/ingress-nginx/blob/main/charts/ingress-nginx/values.yaml
     controller:
       ingressClassResource:
@@ -25,9 +27,49 @@ spec:
         default: true
       minAvailable: 1
       replicaCount: 2
+      metrics:
+        enabled: true
+        serviceMonitor:
+          enabled: true
+        prometheusRule:
+          enabled: true
+          rules:
+            - alert: NGINXConfigFailed
+              expr: count(nginx_ingress_controller_config_last_reload_successful == 0) > 0
+              for: 1s
+              labels:
+                severity: critical
+              annotations:
+                description: bad ingress config - nginx config test failed
+                summary: uninstall the latest ingress changes to allow config reloads to resume
+            - alert: NGINXTooMany500s
+              expr: 100 * ( sum( nginx_ingress_controller_requests{status=~"5.+"} ) / sum(nginx_ingress_controller_requests) ) > 5
+              for: 1m
+              labels:
+                severity: warning
+              annotations:
+                description: Too many 5XXs
+                summary: More than 5% of all requests returned 5XX, this requires your attention
+            - alert: NGINXTooMany400s
+              expr: 100 * ( sum( nginx_ingress_controller_requests{status=~"4.+"} ) / sum(nginx_ingress_controller_requests) ) > 5
+              for: 1m
+              labels:
+                severity: warning
+              annotations:
+                description: Too many 4XXs
+                summary: More than 5% of all requests returned 4XX, this requires your attention
       service:
+        type: LoadBalancer
         enableHttp: true
+        enableHttps: true
+        nodePorts:
+          http: 32322
+          https: 32757
+          udp:
+            "30111": 30111
         annotations:
           # based on: https://github.com/oracle/oci-cloud-controller-manager/blob/master/docs/load-balancer-annotations.md
           oci.oraclecloud.com/load-balancer-type: "nlb"
           oci-network-load-balancer.oraclecloud.com/security-list-management-mode: "None"
+    udp:
+      "30111": "wireguard/wireguard:30111"
