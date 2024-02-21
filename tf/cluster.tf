@@ -78,15 +78,6 @@ resource "oci_core_volume" "arm_instance_volume" {
   freeform_tags       = { "free-k8s-index" = count.index }
 }
 
-data "oci_containerengine_node_pool" "k8s_node_pool" {
-  depends_on = [
-    oci_containerengine_node_pool.k8s_node_pool
-  ]
-
-  count        = var.arm_pool_count
-  node_pool_id = oci_containerengine_node_pool.k8s_node_pool[count.index].id
-}
-
 resource "oci_identity_dynamic_group" "k8s_instances" {
   compartment_id = var.compartment_id
   description    = "k8s instances"

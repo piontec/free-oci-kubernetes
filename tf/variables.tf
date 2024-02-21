@@ -28,3 +28,8 @@ variable "arm_pool_images" {
     "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaawo2geurhrh2tgdrxmauzfffny3t4cc66rpdtk6rjrugwro4igfbq",
   ]
 }
+variable "enable_wireguard" {
+  type        = bool
+  description = "Weather or not create wireguard security group allow rules."
+  default     = true
+}

@@ -39,6 +39,11 @@ resource "oci_core_security_list" "private_subnet_sl" {
   }
 }
 
+locals {
+  public_tcp_ports = [80, 443, 6443]
+  public_udp_ports = var.enable_wireguard == true ? [30111] : []
+}
+
 resource "oci_core_security_list" "public_subnet_sl" {
   compartment_id = var.compartment_id
   vcn_id         = module.vcn.vcn_id
@@ -59,26 +64,33 @@ resource "oci_core_security_list" "public_subnet_sl" {
     protocol    = "all"
   }
 
-  ingress_security_rules {
-    protocol    = "6"
-    source      = "0.0.0.0/0"
-    source_type = "CIDR_BLOCK"
-    stateless   = false
+  dynamic "ingress_security_rules" {
+    for_each = local.public_tcp_ports
+    content {
+      protocol    = "6"
+      source      = "0.0.0.0/0"
+      source_type = "CIDR_BLOCK"
+      stateless   = false
 
-    tcp_options {
-      max = 443
-      min = 443
+      tcp_options {
+        max = ingress_security_rules.value
+        min = ingress_security_rules.value
+      }
     }
   }
-  ingress_security_rules {
-    protocol    = "6"
-    source      = "0.0.0.0/0"
-    source_type = "CIDR_BLOCK"
-    stateless   = false
 
-    tcp_options {
-      max = 80
-      min = 80
+  dynamic "ingress_security_rules" {
+    for_each = local.public_udp_ports
+    content {
+      protocol    = "17"
+      source      = "0.0.0.0/0"
+      source_type = "CIDR_BLOCK"
+      stateless   = false
+
+      udp_options {
+        max = ingress_security_rules.value
+        min = ingress_security_rules.value
+      }
     }
   }
 }
