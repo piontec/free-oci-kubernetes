@@ -1,4 +1,3 @@
----
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
 metadata:
@@ -44,9 +43,8 @@ metadata:
   name: gitops-dashboard
 spec:
   endpoints:
-  - path: /metrics
-    port: http-metrics
+    - path: /metrics
+      port: http-metrics
   selector:
     matchLabels:
       app.kubernetes.io/name: weave-gitops
-

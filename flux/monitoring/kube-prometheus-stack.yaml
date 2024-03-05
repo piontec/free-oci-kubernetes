@@ -19,11 +19,11 @@ spec:
   valuesFrom:
     - kind: Secret
       name: prom-stack-grafana-pass
-    # doesn't wrok :(
-    #    - kind: Secret
-    #      name: alertmanager-slack-api-secret
-    #      valuesKey: url
-    #      targetPath: ".alertmanager.config.receivers[1].slack_configs[0]"
+      # doesn't wrok :(
+      #    - kind: Secret
+      #      name: alertmanager-slack-api-secret
+      #      valuesKey: url
+      #      targetPath: ".alertmanager.config.receivers[1].slack_configs[0]"
   values:
     prometheus:
       prometheusSpec:
@@ -109,11 +109,10 @@ spec:
                 username: alertmanager
                 api_url_file: /etc/slack-url/url
       ingress:
-        enabled:
-          false
-          #      alertmanagerSpec:
-          #        alertmanagerConfiguration:
-          #          name: default-alertmanager-config
+        enabled: false
+        #      alertmanagerSpec:
+        #        alertmanagerConfiguration:
+        #          name: default-alertmanager-config
     grafana:
       grafana.ini:
         server:

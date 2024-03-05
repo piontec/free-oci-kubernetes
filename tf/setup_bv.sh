@@ -2,7 +2,7 @@
 
 echo "Checking tools"
 which oci 2>&1 1>/dev/null
-if [[ $? -eq 1 ]]; then 
+if [[ $? -eq 1 ]]; then
 	echo "Installing tools..."
 	dnf install jq python36-oci-cli -yq
 else

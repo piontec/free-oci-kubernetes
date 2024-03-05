@@ -45,4 +45,3 @@ spec:
 
   selector:
     app: kube-echo
-
