@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-local-path-${create_dir_proj_name}
+  namespace: kube-system
+spec:
+  template:
+    spec:
+      backoffLimit: 1
+      restartPolicy: Never
+      containers:
+        - name: create-dir
+          image: alpine
+          env:
+            - name: TARGET_DIR
+              value: ${create_dir_path}
+          command:
+            - sh
+            - -c
+            - 'echo "Creating $TARGET_DIR"; mkdir $TARGET_DIR || true; echo "Done"'
+          volumeMounts:
+            - name: main-volume
+              mountPath: /srv
+      volumes:
+        - name: main-volume
+          persistentVolumeClaim:
+            claimName: ${create_dir_pvc}
