@@ -1,0 +1,9 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: server-init-template
+data:
+  server.conf: "[Interface]\nAddress = $${INTERFACE}.1\nListenPort = 51820\nPrivateKey = $(cat /config/server/privatekey-server)\nPostUp = iptables -A FORWARD
+    -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth+ -j MASQUERADE; ip route add ${k8s_service_cidr} via $(ip
+    r | grep 'default via' | cut -d' ' -f3) \nPostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING
+    -o eth+ -j MASQUERADE; ip route del ${k8s_service_cidr} via $(ip r | grep 'default via' | cut -d' ' -f3)\n"

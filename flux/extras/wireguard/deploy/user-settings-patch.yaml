@@ -1,0 +1,18 @@
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: ALLOWEDIPS
+    # Keep 10.8.0.0/16 always. Add '10.96.0.0/16' after comma if you want kubernetes services to be reachable
+    # value: "10.8.0.0/16,10.96.0.0/16"
+    value: "10.8.0.0/16"
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: SERVERURL
+    value: "YOUR_NETWORK_LOAD_BALANCER IP"
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: PEERS
+    # comma separated list of peer names or peer count
+    value: "peer1,peer2"

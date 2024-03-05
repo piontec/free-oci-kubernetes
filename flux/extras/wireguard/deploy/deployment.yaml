@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wireguard
+  labels:
+    app: wireguard
+spec:
+  selector:
+    matchLabels:
+      app: wireguard
+  template:
+    metadata:
+      labels:
+        app: wireguard
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      volumes:
+        - name: mods
+          hostPath:
+            path: /lib/modules
+            type: Directory
+        - name: wireguard-confs
+          persistentVolumeClaim:
+            claimName: wireguard-confs
+        - name: server-init-template
+          configMap:
+            name: server-init-template
+      initContainers:
+        - name: load-mods
+          image: busybox:stable
+          command: ["sh", "-c", "modprobe iptable_nat iptable_filter ip_tables ipt_REJECT nf_reject_ipv4 ip6table_filter ip6table_mangle ip6table_nat ip6_tables
+              nf_nat"]
+          volumeMounts:
+            - name: mods
+              mountPath: /lib/modules
+              readOnly: true
+          securityContext:
+            capabilities:
+              add:
+                - SYS_MODULE
+      containers:
+        - name: wireguard
+          image: linuxserver/wireguard:v1.0.20210914-ls22
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Warsaw"
+            - name: SERVERPORT
+              value: "30111"
+            - name: INTERNAL_SUBNET
+              value: "10.8.0.0/16"
+            - name: LOG_CONFS
+              value: "true"
+            - name: PERSISTENTKEEPALIVE_PEERS
+              value: "all"
+          volumeMounts:
+            - name: wireguard-confs
+              mountPath: /config
+            - name: server-init-template
+              mountPath: "/defaults/server.conf"
+              readOnly: true
+              subPath: server.conf
+          ports:
+            - containerPort: 51820
+              protocol: UDP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN

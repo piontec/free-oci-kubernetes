@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wireguard
+spec:
+  type: ClusterIP
+  selector:
+    app: wireguard
+  ports:
+    - port: 30111
+      protocol: UDP
+      targetPort: 51820

@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: wireguard-confs
+  labels:
+    owner: wireguard-confs
+spec:
+  capacity:
+    storage: 50Mi
+  volumeMode: Filesystem # Mount volume into Pod as a directory.
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: local-storage
+  local:
+    path: /srv/wireguard-confs/
+  nodeAffinity: # nodeAffinity is required when using local volumes.
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: topology.kubernetes.io/zone
+              operator: In
+              values:
+                - EU-FRANKFURT-1-AD-2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wireguard-confs
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Mi
+  storageClassName: local-storage
+  volumeMode: Filesystem
+  volumeName: wireguard-confs
+  selector:
+    matchLabels:
+      owner: wireguard-confs
