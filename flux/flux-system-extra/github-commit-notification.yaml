@@ -6,9 +6,9 @@ metadata:
 spec:
   # provider type can be github or gitlab
   type: github
-  address: https://github.com/piontec/oci-infra
+  address: ${https_repo_url}
   secretRef:
-    name: github-api-secret
+    name: github-api-token
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta1
 kind: Alert
@@ -21,5 +21,5 @@ spec:
   eventSeverity: info
   eventSources:
     - kind: Kustomization
-      name: flux-system
+      name: "*"
       namespace: flux-system

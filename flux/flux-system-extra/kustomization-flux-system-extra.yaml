@@ -16,3 +16,6 @@ spec:
     provider: sops
     secretRef:
       name: sops-gpg
+  postBuild:
+    substitute:
+      https_repo_url: "https://github.YOUR_REPO_HERE.com/user/repo"
