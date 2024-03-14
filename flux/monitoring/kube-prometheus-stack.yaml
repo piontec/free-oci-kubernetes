@@ -95,14 +95,14 @@ spec:
           group_wait: 30s
           group_interval: 5m
           repeat_interval: 12h
-          receiver: "piontec-slack"
+          receiver: "slack"
           routes:
             - receiver: "null"
               matchers:
                 - alertname =~ "InfoInhibitor|Watchdog"
         receivers:
           - name: "null"
-          - name: "piontec-slack"
+          - name: "slack"
             slack_configs:
               - send_resolved: true
                 channel: "#alerts"
