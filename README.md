@@ -2,6 +2,37 @@
 
 **Work in progress**
 
+# Getting started
+
+## 1. Tools you need to have installed
+
+- open tofu
+- flux
+- sops
+- gpg
+- oci oracle cloud cli https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm
+
+## 2. Preparing your repository
+
+## 3. Bootstrapping the cloud infrastructure
+
+https://signup.oraclecloud.com/
+you have to have a credit card, even though you won't pay for anything (as of now)
+
+Run
+
+```
+oci session authenticate
+```
+
+## 4. Bootstrapping the GitOps setup
+
+### 4.1. Generating GPG key and configuring sops
+
+### 4.2. Create a slack profile
+
+### 4.2. Bootstrapping Flux
+
 Getting started:
 
 **Note**: all `*.tpl` files need to be edited
