@@ -25,6 +25,18 @@ Run
 oci session authenticate
 ```
 
+Go to repo/tf
+
+```
+cp variables-private.tf.tpl variables-private.tf
+```
+
+Edit `variables-private.tf`
+
+- insert SSH key
+- bastion allowed IPs you're gonna connect from
+- compartment ID - how to find https://docs.oracle.com/en-us/iaas/Content/GSG/Tasks/contactingsupport_topic-Locating_Oracle_Cloud_Infrastructure_IDs.htm
+
 ## 4. Bootstrapping the GitOps setup
 
 ### 4.1. Generating GPG key and configuring sops
@@ -32,6 +44,10 @@ oci session authenticate
 ### 4.2. Create a slack profile
 
 ### 4.2. Bootstrapping Flux
+
+# Design decision racionale
+
+# Synchronizing with source and providing pull requests
 
 Getting started:
 

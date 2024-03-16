@@ -12,7 +12,7 @@ variable "ssh_public_key" {
   type        = string
   description = "The SSH public key to use for connecting to the worker nodes"
   default     = "ssh-rsa AAAA........"
-
+}
 variable "bastion_allowed_ips" {
   type        = list(string)
   description = "List of IP prefixes allowed to connect via bastion"
