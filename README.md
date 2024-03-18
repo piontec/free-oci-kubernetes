@@ -143,7 +143,12 @@ You need to process the following files with secrets:
 
 Additionally, edit `flux/kube-system/kustomization-kube-system-extra.yaml` and enter your correct email address. It's used for the `letsencrypt` automatic cert provider.
 
-Make sure that the `tofu` run is complete as well. Now, you can commit everything into your GitOps repository and push the changes:
+Make sure that the `tofu` run is complete as well. Now, you can commit everything into your GitOps repository and push the changes, adding the following files to your repo:
+
+- flux/kube-system/ingress-nginx-secgroup-oidc-cm.yaml
+- tf/terraform.tfstate
+- tf/terraform.tfstate.backup
+- tf/variables-private.tf
 
 ```sh
 git commit -am "cluster bootstrap commit"
