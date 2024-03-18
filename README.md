@@ -52,10 +52,11 @@ your billing tier change is processed.
 In your terminal, run:
 
 ```sh
-oci session authenticate
+oci setup config
 ```
 
-This will open your browser and authenticate your `oci` CLI tools with the cloud provider.
+This will guide you through the process of setting up CLI access to OCI infrastructure. Read the documents printed by the `setup` command
+to learn where to find necessary input data.
 
 Next, go to the `tf/` directory in the repository and fill in information about your cloud account.
 Copy the template settings file `cp variables-private.tf.tpl variables-private.tf` and edit it:
@@ -69,6 +70,20 @@ It's time to run `tofu` - be patient, the `apply` step can take pretty long (eve
 ```sh
 tofu init
 tofu apply
+```
+
+Now, we can create a `kube.config` file to access our cluster. Find your cluster's OCID (cloud provider's ID) or just go to the web console in OCI, list your clusters and click on the newly created one. Then, in the top menu,
+choose 'access cluster' and 'public access'. You will get a ready command that looks like this - run it:
+
+```sh
+oci ce cluster create-kubeconfig --cluster-id ocid1.cluster.oc1.REGION.aaaaaaaaopsxxxxxxxxxxxx --file $HOME/.kube/oci-test.config --region REGION --token-version 2.0.0  --kube-endpoint PUBLIC_ENDPOINT
+```
+
+Your kubeconfig should be ready. You can test it with:
+
+```sh
+export export KUBECONFIG=~/.kube/oci-test.config
+kubectl get nodes
 ```
 
 ## 4. Bootstrapping the GitOps setup
@@ -139,7 +154,7 @@ git push
 
 Stat by reading the [official documentation about bootstrapping Flux with GitHub](https://fluxcd.io/flux/installation/bootstrap/github/).
 
-Make sure you noted your GitHub Private Access Token (PAT). Now, run the following command:
+Make sure you noted your GitHub Private Access Token (PAT). Now, remove the flux config present in this repo (it's used for the auto-upgrade GitHub Action) and run the following command:
 
 ```sh
 git rm -r flux/flux-system
@@ -155,6 +170,22 @@ flux bootstrap github \
 ```
 
 When asked, enter the PAT.
+
+Wait until it's done, then add back the needed Kustomizations into your config file `flux/flux-system/kustomization.yaml`, so it looks like this:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - gotk-components.yaml
+  - gotk-sync.yaml
+  - ../flux-system-extra/kustomization-flux-system-extra.yaml
+  - ../kube-system/kustomization-kube-system.yaml
+  - ../monitoring/kustomization-monitoring.yaml
+  - ../wireguard/
+```
+
+Commit, push and give Flux some time to reconcile everything.
 
 Your work should be done now! From now on, Flux takes over and adjusts your cluster configuration exactly as in your GitOps repository on GitHub.
 
@@ -172,17 +203,8 @@ you like. Or you can read on [keeping track and contributing back](!TODO).
 
 # Design decision racionale
 
+**Work in Progress**
+
 # Synchronizing with source and providing pull requests
 
-Getting started:
-
-**Note**: all `*.tpl` files need to be edited
-
-- bootstrap flux
-  - add your variables in `*.tpl` files
-    - configure `sops`
-      - create the sops key in cluster as a `sops-gpg` secret in `flux-system` namespace using `sops.asc` key name in the Secret
-    - configure your key hash and rename the file `flux/.sops.yaml.tpl`
-    - prepare and encrypt needed secrets
-  - run flux bootstrap
-- done
+**Work in Progress**
