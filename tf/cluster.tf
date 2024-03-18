@@ -37,6 +37,8 @@ resource "oci_containerengine_node_pool" "k8s_node_pool" {
   kubernetes_version = var.k8s_version
   name               = "free-k8s-node-pool-${count.index}"
 
+  depends_on = [oci_core_volume.arm_instance_volume]
+
   node_config_details {
     placement_configs {
       availability_domain = data.oci_identity_availability_domains.ads.availability_domains[count.index].name
@@ -73,7 +75,7 @@ resource "oci_core_volume" "arm_instance_volume" {
   count          = var.arm_pool_count
   compartment_id = var.compartment_id
 
-  availability_domain = oci_containerengine_node_pool.k8s_node_pool[count.index].nodes[0].availability_domain
+  availability_domain = data.oci_identity_availability_domains.ads.availability_domains[count.index].name
   size_in_gbs         = var.arm_pool_instance_disk_size_in_gb
   freeform_tags       = { "free-k8s-index" = count.index }
 }
