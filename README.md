@@ -112,6 +112,15 @@ cp .sops.yaml.tpl .sops.yaml
 
 then edit the file and paste your key fingerprint.
 
+Next, save the private key to your cluster *without putting ths key into the repo*:
+
+```txt
+gpg --export-secret-keys --armor "[KEY_FINGERPRINT]" |
+kubectl create secret generic sops-gpg \
+--namespace=flux-system \
+--from-file=sops.asc=/dev/stdin
+```
+
 ### 4.2. Create a slack profile
 
 This step is not really necessary, but it's very useful. Here we'll create a free slack profile, where we can receive notifications
@@ -149,6 +158,7 @@ Make sure that the `tofu` run is complete as well. Now, you can commit everythin
 - tf/terraform.tfstate
 - tf/terraform.tfstate.backup
 - tf/variables-private.tf
+- .terraform.lock.hcl
 
 ```sh
 git commit -am "cluster bootstrap commit"
