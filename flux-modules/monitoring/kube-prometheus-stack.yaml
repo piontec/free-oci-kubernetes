@@ -116,9 +116,9 @@ spec:
     grafana:
       grafana.ini:
         server:
-          root_url: "https://sys.tailored.cloud/grafana"
+          root_url: ${grafana_url}
           serve_from_sub_path: true
-          domain: "sys.tailored.cloud"
+          domain: ${grafana_domain}
       plugins:
         - oci-metrics-datasource
       additionalDataSources:
@@ -135,14 +135,14 @@ spec:
       ingress:
         enabled: true
         hosts:
-          - sys.tailored.cloud
+          - ${grafana_domain}
         path: /grafana
         annotations:
           cert-manager.io/cluster-issuer: "letsencrypt-prod"
         tls:
-          - secretName: grafana.tailored.cloud-tls
+          - secretName: ${grafana_domain}-tls
             hosts:
-              - sys.tailored.cloud
+              - ${grafana_domain}
     kubelet:
       enabled: false
     kubeControllerManager:

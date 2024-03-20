@@ -144,17 +144,23 @@ For each such file (see list below), you have to repeat the same procedure:
 
 You need to process the following files with secrets:
 
-- ./flux-system-extra/github-api-token-secret.yaml.tpl.enc - paste your GitHub PAT again, so Flux can report back the status fo your commits
-- ./flux-system-extra/gitops-dashboard-secret.yaml.tpl.enc - create a password for the web application with Flux overwiev
-- ./flux-system-extra/slack-flux-notification-url-secret.yaml.tpl.enc - enter here the Slack webhook you created earlier
-- ./monitoring/alertmanager-slack-api-secret.yaml.tpl.enc - again, include the Slack webhook URL
-- ./monitoring/prom-stack-grafana-pass-secret.yaml.tpl.enc - create a user password for the Grafana web UI
+- ./flux-modules/flux-system-extra/github-api-token-secret.yaml.tpl.enc - paste your GitHub PAT again, so Flux can report back the status fo your commits
+- ./flux-modules/flux-system-extra/slack-flux-notification-url-secret.yaml.tpl.enc - enter here the Slack webhook you created earlier
+- ./flux-modules/monitoring/alertmanager-slack-api-secret.yaml.tpl.enc - again, include the Slack webhook URL
+- ./flux-modules/monitoring/prom-stack-grafana-pass-secret.yaml.tpl.enc - create a user password for the Grafana web UI
 
-Additionally, edit `flux/kube-system/kustomization-kube-system-extra.yaml` and enter your correct email address. It's used for the `letsencrypt` automatic cert provider.
+Additionally, you have to edit `postBuild` section of a few files to give information like your DNS name for hosting the cluster or admin's email address (required for
+`letsencrypt`). The files you need to edit are:
 
-Make sure that the `tofu` run is complete as well. Now, you can commit everything into your GitOps repository and push the changes, adding the following files to your repo:
+- flux-modules/flux-system-extra/kustomization-flux-system-extra.yaml
+- flux-modules/kube-system-extra/kustomization-kube-system-extra.yaml
+- flux-modules/monitoring/kustomization-monitoring.yaml
+- flux-modules/extras/wireguard/kustomization-wireguard.yaml
+- flux-modules/extras/wireguard/kustomization-wireguard-pre.yaml
 
-- flux/kube-system/ingress-nginx-secgroup-oidc-cm.yaml
+Make sure that the `tofu` run is complete as well. Now, you can commit everything into your GitOps repository and push the changes, adding all the created terraform and *.yaml
+files to your repo. Check that all the files are in, especially `tofu` state files:
+
 - tf/terraform.tfstate
 - tf/terraform.tfstate.backup
 - tf/variables-private.tf

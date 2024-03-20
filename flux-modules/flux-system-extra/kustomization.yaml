@@ -2,8 +2,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: flux-system
 resources:
-  - gitops-dashboard.yaml
-  - gitops-dashboard-secret.yaml
   - flux-notifications.yaml
   - github-commit-notification.yaml
   - slack-flux-notification-url-secret.yaml

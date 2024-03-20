@@ -6,7 +6,7 @@ if [[ $? -eq 1 ]]; then
 	echo "Installing tools..."
 	dnf install jq python36-oci-cli -yq
 else
-  echo "Tools found."
+	echo "Tools found."
 fi
 
 set -e
@@ -51,6 +51,8 @@ else
 	echo "The volume $BLOCK_VOLUME_OCID in state $STATE is already attached to another instance $ATTACHED_INSTANCE. Exiting."
 	exit 1
 fi
+
+ls -la /dev/sd*
 
 if [[ $(lsblk -f | grep "sdb1" | grep "ext4") != "" ]]; then
 	echo "Volume $DEV already has a filesystem"

@@ -8,7 +8,7 @@ spec:
     - name: wireguard-pre-deploy
     - name: kube-system
   interval: 1h
-  path: ./flux/extras/wireguard/deploy
+  path: ./flux-modules/extras/wireguard/deploy
   prune: true
   sourceRef:
     kind: GitRepository
