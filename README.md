@@ -64,6 +64,7 @@ Copy the template settings file `cp variables-private.tf.tpl variables-private.t
 - insert your public SSH key as the `default` value for `ssh_public_key`
 - enter 'bastion allowed IPs' these are the IP addresses allowed to connect to the bastion host created for the cluster nodes
 - enter your default `compartment ID` - [here's how to find it](https://docs.oracle.com/en-us/iaas/Content/GSG/Tasks/contactingsupport_topic-Locating_Oracle_Cloud_Infrastructure_IDs.htm)
+- enter your region and 2 Availablity Domains within it
 
 It's time to run `tofu` - be patient, the `apply` step can take pretty long (even up to an hour):
 
@@ -112,7 +113,7 @@ cp .sops.yaml.tpl .sops.yaml
 
 then edit the file and paste your key fingerprint.
 
-Next, save the private key to your cluster *without putting ths key into the repo*:
+Next, save the private key to your cluster _without putting ths key into the repo_:
 
 ```txt
 gpg --export-secret-keys --armor "[KEY_FINGERPRINT]" |
@@ -158,7 +159,7 @@ Additionally, you have to edit `postBuild` section of a few files to give inform
 - flux-modules/extras/wireguard/kustomization-wireguard.yaml
 - flux-modules/extras/wireguard/kustomization-wireguard-pre.yaml
 
-Make sure that the `tofu` run is complete as well. Now, you can commit everything into your GitOps repository and push the changes, adding all the created terraform and *.yaml
+Make sure that the `tofu` run is complete as well. Now, you can commit everything into your GitOps repository and push the changes, adding all the created terraform and \*.yaml
 files to your repo. Check that all the files are in, especially `tofu` state files:
 
 - tf/terraform.tfstate
@@ -229,3 +230,4 @@ you like. Or you can read on [keeping track and contributing back](!TODO).
 # Synchronizing with source and providing pull requests
 
 **Work in Progress**
+
