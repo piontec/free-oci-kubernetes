@@ -26,10 +26,6 @@ resource "oci_containerengine_cluster" "k8s_cluster" {
   }
 }
 
-data "oci_identity_availability_domains" "ads" {
-  compartment_id = var.compartment_id
-}
-
 resource "oci_containerengine_node_pool" "k8s_node_pool" {
   count              = var.arm_pool_count
   cluster_id         = oci_containerengine_cluster.k8s_cluster.id
@@ -41,7 +37,7 @@ resource "oci_containerengine_node_pool" "k8s_node_pool" {
 
   node_config_details {
     placement_configs {
-      availability_domain = data.oci_identity_availability_domains.ads.availability_domains[count.index].name
+      availability_domain = var.ad_list[count.index]
       subnet_id           = oci_core_subnet.vcn_private_subnet.id
     }
     size          = var.arm_pool_size
@@ -75,7 +71,7 @@ resource "oci_core_volume" "arm_instance_volume" {
   count          = var.arm_pool_count
   compartment_id = var.compartment_id
 
-  availability_domain = data.oci_identity_availability_domains.ads.availability_domains[count.index].name
+  availability_domain = var.ad_list[count.index]
   size_in_gbs         = var.arm_pool_instance_disk_size_in_gb
   freeform_tags       = { "free-k8s-index" = count.index }
 }

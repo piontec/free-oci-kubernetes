@@ -18,3 +18,8 @@ variable "bastion_allowed_ips" {
   description = "List of IP prefixes allowed to connect via bastion"
   default     = ["127.0.0.1/32"]
 }
+variable "ad_list" {
+  type        = list
+  description = "List of length 2 with the names of availability regions to use"
+  default     = ["fJnH:EU-FRANKFURT-1-AD-1", "fJnH:EU-FRANKFURT-1-AD-1"]
+}
