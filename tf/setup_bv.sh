@@ -59,6 +59,7 @@ if [[ $(lsblk -f | grep "sdb1" | grep "ext4") != "" ]]; then
 else
 	echo "Creating partition and filesystem on $DEV"
 	parted --script $DEV mklabel gpt mkpart primary ext4 0% 100%
+	partprobe $DEV
 	mkfs.ext4 -L srv ${DEV}1
 fi
 
