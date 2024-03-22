@@ -155,6 +155,6 @@ resource "oci_core_network_security_group_security_rule" "nginx_ingress_network_
 
 resource "local_file" "ingress_sec_group_oidc" {
   content         = templatefile("network-ingress-oidc.tftpl", { oidc = oci_core_network_security_group.nginx_ingress_network_security_group.id })
-  filename        = "../flux/kube-system/ingress-nginx-secgroup-oidc-cm.yaml"
+  filename        = "../flux-modules/kube-system/ingress-nginx-secgroup-oidc-cm.yaml"
   file_permission = "0640"
 }
