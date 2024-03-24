@@ -21,5 +21,5 @@ variable "bastion_allowed_ips" {
 variable "ad_list" {
   type        = list
   description = "List of length 2 with the names of availability regions to use"
-  default     = ["fJnH:EU-FRANKFURT-1-AD-1", "fJnH:EU-FRANKFURT-1-AD-1"]
+  default     = ["fJnH:EU-FRANKFURT-1-AD-1", "fJnH:EU-FRANKFURT-1-AD-2"]
 }

@@ -6,21 +6,27 @@ pre-installed and is fully GitOps drive using Flux CD.
 In more details, by following this guide you'll get:
 
 - a completely free Kubernetes cluster, with 2 nodes, each wit 4 core ARM CPU, 12 GBs of RAM and 50 GB of storage (using the Oracle Cloud Infrastructure)
-- a fully GitOps driven Kubernetes cluster, including
+- a fully GitOps driven Kubernetes cluster using Flux CD, including
   - nginx-ingress-controller
   - cert-manager
   - monitoring setup, including Prometheus, Loki and Grafana
   - personal notifications about the alerts and health of your cluster
   - optional extra features, like a wireguard VPN server exposing your cluster deployments
 
-# Getting started
+## Index
 
-## Intro
+- How to create your own cluster - this document
+- [Design considerations](design.md)
+- [Extras](extras.md) - optional extra modules
+
+## Getting started
+
+### Intro
 
 Before we can start creating the cluster, we need to first bootstrap our cloud infrastructure, our security keys and other secrets
 that we need to run all the applications.
 
-## 1. Tools you need to have installed
+### 1. Tools you need to have installed
 
 Before we start, make sure that you have installed (tested on Linux, should work on other OSes as well):
 
@@ -30,13 +36,13 @@ Before we start, make sure that you have installed (tested on Linux, should work
 - gpg - encryption tool that we will use as a backend for `sops`
 - [oci oracle cloud cli](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm) - a CLI tool to control infrastructure in the OCI
 
-## 2. Preparing your repository
+### 2. Preparing your repository
 
 Your cluster will be driven form your own repository, that has to be a copy of this one. Create a fork of this repository
 (I recommend keeping it private) and check it out on your local drive. If not stated otherwise, all the commands and files in
 this guide will assume we're in the root directory of your repository.
 
-## 3. Bootstrapping the cloud infrastructure
+### 3. Bootstrapping the cloud infrastructure
 
 Before you start creating any infrastructure, you need to register a new account with Oracle Cloud. You need to have a valid credit
 card to register, even though the whole setup here is tailored to not use any paid resources and max out the free tier the OCI offers.
@@ -47,7 +53,7 @@ your [billing settings](https://cloud.oracle.com/invoices-and-orders/upgrade-and
 Once again, all the resource we use are available (at the time of writing and ofr the last at least a year) for free. Now you have to wait until
 your billing tier change is processed.
 
-### 3.1. Creating the infrastructure
+#### 3.1. Creating the infrastructure
 
 In your terminal, run:
 
@@ -87,11 +93,11 @@ export export KUBECONFIG=~/.kube/oci-test.config
 kubectl get nodes
 ```
 
-## 4. Bootstrapping the GitOps setup
+### 4. Bootstrapping the GitOps setup
 
 While waiting for the infrastructure to be created, we can start filling in configuration necessary to set up Flux on our cluster.
 
-### 4.1. Generating GPG key and configuring sops
+#### 4.1. Generating GPG key and configuring sops
 
 First, we have to configure an encryption tool, that will help us to store all the secrets in the repository in an encrypted form, but one
 that is still automatically decrypted on the cluster.
@@ -122,7 +128,7 @@ kubectl create secret generic sops-gpg \
 --from-file=sops.asc=/dev/stdin
 ```
 
-### 4.2. Create a slack profile
+#### 4.2. Create a slack profile
 
 This step is not really necessary, but it's very useful. Here we'll create a free slack profile, where we can receive notifications
 from Flux and from our monitoring setup. Slack notifications are pretty easy to set up and still can be completely free, but obviously feel
@@ -130,7 +136,7 @@ free to change this step later.
 
 First, [create a new slack profile](https://slack.com/get-started#/createnew). Then, create and save slack's webhook URL using [this instruction](https://api.slack.com/messaging/webhooks).
 
-### 4.3. Preparing secrets
+#### 4.3. Preparing secrets
 
 In the configuration repo, there are many secrets needed, usually passwords to different applications deployed. All files that need editing and filling in
 some secrets have file names ending with `.tpl.enc`.
@@ -172,7 +178,7 @@ git commit -am "cluster bootstrap commit"
 git push
 ```
 
-### 4.4. Bootstrap Flux
+#### 4.4. Bootstrap Flux
 
 Stat by reading the [official documentation about bootstrapping Flux with GitHub](https://fluxcd.io/flux/installation/bootstrap/github/).
 
@@ -221,13 +227,35 @@ kubectl get kustomization -A
 ### 5. Next steps
 
 Your cluster is ready. Now you can either forget about the repository you cloned (not recommended, but totally possible) and modify your repository however
-you like. Or you can read on [keeping track and contributing back](!TODO).
+you like. Or you can read on [keeping track and contributing back](#synchronizing-with-source-repository-and-providing-pull-requests).
 
-# Design decision racionale
+## Configuring the repository to run automatic Flux upgrade job
 
-**Work in Progress**
+## Synchronizing with source repository and providing pull requests
 
-# Synchronizing with source and providing pull requests
+After you bootstrap your own repository, you can forget about the one you forked it from. Still, it is beneficial to be able to get upstream changes,
+including new versions and new modules. Below is information useful in tracking and contributing to the upstream repository.
 
-**Work in Progress**
+### Fetching changes from the upstream repository
 
+It is recommended to setup additional git source repository, then fetch and merge the changes with your selected branch:
+
+```sh
+git remote add upstream https://github.com/piontec/free-oci-kubernetes.git  # run only once, if you don't have the upstream definition yet
+git fetch upstream main
+git merge upstream/main
+```
+
+Now you might need to resolve any potential merge conflicts. Once that's done, review the changes and you should be ready to push them to your branch for
+Flux to pick-up.
+
+### Preparing pull requests
+
+It's best if you prepare a small and scoped PR. Please make also sure, that your code complies to `pre-commit` linting tests. To make it run automatically
+for you, install [pre-commit](https://pre-commit.com/), then run:
+
+```txt
+pre-commit install --install-hooks
+```
+
+From now on, all the commits will automatically validated.
