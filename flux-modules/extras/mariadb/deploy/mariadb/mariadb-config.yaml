@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-config
+data:
+  UMASK: "0660"
+  UMASK_DIR: "0750"
+  MARIADB_AUTO_UPGRADE: "1"

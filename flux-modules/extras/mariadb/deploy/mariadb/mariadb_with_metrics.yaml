@@ -1,0 +1,39 @@
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: MariaDB
+metadata:
+  name: mariadb
+spec:
+  envFrom:
+    - configMapRef:
+        name: mariadb-config
+  metrics:
+    enabled: true
+    passwordSecretKeyRef:
+      key: password
+      name: mariadb-metrics-password
+    username: mariadb-metrics
+  myCnf: |
+    [mysqld]
+    bind-address=0.0.0.0
+    default_storage_engine=InnoDB
+    binlog_format=row
+    innodb_autoinc_lock_mode=2
+    max_allowed_packet=256M
+  port: 3306
+  replicas: 1
+  rootEmptyPassword: false
+  rootPasswordSecretKeyRef:
+    key: root-password
+    name: mariadb-password
+  securityContext:
+    allowPrivilegeEscalation: false
+  serviceAccountName: mariadb
+  storage:
+    size: 10Gi
+    volumeClaimTemplate:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: local-storage
