@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- added support for [`mariadb-operator`](https://github.com/mariadb-operator/mariadb-operator)
+
 ## 0.2.0 (2024.03.22)
 
 - fix multiple issues when provisioning with `tofu` on an empty OCI account
