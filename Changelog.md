@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added support for [`mariadb-operator`](https://github.com/mariadb-operator/mariadb-operator)
+- upgrade to k8s 1.29.1
 
 ## 0.2.0 (2024.03.22)
 
