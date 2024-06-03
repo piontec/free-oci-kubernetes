@@ -1,4 +1,4 @@
-apiVersion: helm.toolkit.fluxcd.io/v2beta1
+apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: metrics-server
@@ -7,7 +7,7 @@ spec:
   chart:
     spec:
       chart: metrics-server
-      version: '>=3.8.2'
+      version: ">=3.8.2"
       sourceRef:
         kind: HelmRepository
         name: metrics-server
