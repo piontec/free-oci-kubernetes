@@ -1,0 +1,25 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: paperless-pre-deploy
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: kube-system-extra
+  interval: 1h
+  path: ./flux-modules/extras/paperless/pre-deploy
+  force: true
+  wait: true
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-gpg
+  postBuild:
+    substitute:
+      create_dir_path: "/srv/paperless"
+      create_dir_pvc: "main-ad1"
+      create_dir_proj_name: "paperless"

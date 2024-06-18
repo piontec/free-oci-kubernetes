@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: paperless
+  labels:
+    owner: paperless
+spec:
+  capacity:
+    storage: 15Gi
+  volumeMode: Filesystem # Mount volume into Pod as a directory.
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: local-storage
+  local:
+    path: /srv/paperless/
+  nodeAffinity: # nodeAffinity is required when using local volumes.
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: topology.kubernetes.io/zone
+              operator: In
+              values:
+                - EU-FRANKFURT-1-AD-2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 15G
+  storageClassName: local-storage
+  volumeMode: Filesystem
+  volumeName: paperless
+  selector:
+    matchLabels:
+      owner: paperless

@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tika
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: tika
+      app.kubernetes.io/name: tika
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: tika
+        app.kubernetes.io/name: tika
+    spec:
+      containers:
+        - name: tika
+          image: ghcr.io/paperless-ngx/tika:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9998
+              name: http
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+  labels:
+    app: tika
+  name: tika
+spec:
+  ports:
+    - name: http
+      port: 9998
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/name: tika
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gotenberg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: gotenberg
+      app.kubernetes.io/name: gotenberg
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: gotenberg
+        app.kubernetes.io/name: gotenberg
+    spec:
+      containers:
+        - name: gotenberg
+          image: docker.io/gotenberg/gotenberg:7.10
+          imagePullPolicy: IfNotPresent
+          command:
+            - gotenberg
+            - "--chromium-disable-javascript=true"
+            - "--chromium-allow-list=file:///tmp/.*"
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+  labels:
+    app: gotenberg
+  name: gotenberg
+spec:
+  ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/name: gotenberg
+  type: ClusterIP
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: paperless-exporter
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app.kubernetes.io/instance: paperless-exporter
+#       app.kubernetes.io/name: paperless-exporter
+#   template:
+#     metadata:
+#       labels:
+#         app.kubernetes.io/instance: paperless-exporter
+#         app.kubernetes.io/name: paperless-exporter
+#     spec:
+#       containers:
+#         - name: paperless-exporter
+#           image: ghcr.io/hansmi/prometheus-paperless-exporter:v0.0.2
+#           imagePullPolicy: IfNotPresent
+#           ports:
+#             - containerPort: 8081
+#               name: http-prom
+#               protocol: TCP
+# ---
+# apiVersion: monitoring.coreos.com/v1
+# kind: PodMonitor
+# metadata:
+#   labels:
+#     app.kubernetes.io/instance: paperless-exporter
+#   name: paperless-exporter
+# spec:
+#   namespaceSelector:
+#     matchNames:
+#       - paperless
+#   podMetricsEndpoints:
+#     - port: http-prom
+#       relabelings:
+#         - action: keep
+#           regex: Running
+#           sourceLabels:
+#             - __meta_kubernetes_pod_phase
+#   selector:
+#     matchLabels:
+#       app.kubernetes.io/name: paperless-exporter

@@ -1,0 +1,100 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: paperless-ngx
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: paperless-ngx
+      version: "*"
+      sourceRef:
+        kind: HelmRepository
+        name: paperless
+        namespace: paperless
+  dependsOn:
+    - name: redis
+  values:
+    controller:
+      replicas: 1
+    env: &paperless-env
+      A_REDIS_PASSWORD:
+        valueFrom:
+          secretKeyRef:
+            name: redis-pass
+            key: pass
+      PAPERLESS_ADMIN_PASSWORD:
+        valueFrom:
+          secretKeyRef:
+            name: paperless-admin-password
+            key: pass
+      PAPERLESS_DBPASS:
+        valueFrom:
+          secretKeyRef:
+            name: db-paperless-user-pass
+            key: pass
+      PAPERLESS_SECRET_KEY:
+        valueFrom:
+          secretKeyRef:
+            name: paperless-secret-key
+            key: pass
+      PAPERLESS_DEBUG: false
+      PAPERLESS_REDIS: redis://:$(A_REDIS_PASSWORD)@redis-master
+      PAPERLESS_REDIS_PREFIX: paperless-pio
+      PAPERLESS_DBENGINE: mariadb
+      PAPERLESS_DBHOST: mariadb.db.svc
+      PAPERLESS_DBPORT: 3306
+      PAPERLESS_DBNAME: paperless
+      PAPERLESS_DBUSER: paperless
+      PAPERLESS_URL: https://[YOUR-HOST]
+      PAPERLESS_ADMIN_USER: admin
+      PAPERLESS_OCR_LANGUAGE: pol
+      PAPERLESS_OCR_LANGUAGES: pol
+      PAPERLESS_OCR_SKIP_ARCHIVE_FILE: with_text
+      PAPERLESS_TIME_ZONE: Europe/Warsaw
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+    persistence:
+      data:
+        enabled: true
+        type: pvc
+        existingClaim: paperless
+        subPath:
+          - path: data
+            mountPath: /usr/src/paperless/data
+          - path: media
+            mountPath: /usr/src/paperless/media
+          - path: export
+            mountPath: /usr/src/paperless/export
+          - path: consume
+            mountPath: /usr/src/paperless/consume
+          - path: tmp
+            mountPath: /tmp/paperless
+        mountPath: ""
+      media:
+        enabled: false
+      export:
+        enabled: false
+      consume:
+        enabled: false
+    ingress:
+      main:
+        enabled: true
+        annotations:
+          nginx.ingress.kubernetes.io/proxy-body-size: 64m
+          cert-manager.io/cluster-issuer: "letsencrypt-prod"
+        hosts:
+          - host: [YOUR-HOST]
+            paths:
+              - path: /
+        tls:
+          - secretName: [YOUR-HOST]
+            hosts:
+              - [YOUR-HOST]
+    postgresql:
+      enabled: false
+    mariadb:
+      enabled: false
+    redis:
+      enabled: false
