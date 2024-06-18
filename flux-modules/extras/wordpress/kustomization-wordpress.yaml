@@ -1,0 +1,30 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: wordpress-${wp_name}-deploy
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: wordpress-${wp_name}-pre-deploy
+    - name: mariadb
+    - name: kube-system-extra
+  interval: 1h
+  path: ./flux-modules/extras/wordpress/deploy
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-gpg
+  patches: []
+  postBuild:
+    substitute:
+      db_name: "${wp_name}"
+      db_userpass_secret: "db-user-pass"
+      db_max_connections: "10"
+      wp_name: "${wp_name}"
+      wp_email: "${wp_email}"
+      wp_blog_name: "${wp_blog_name}"
+      wp_hostname: "${wp_hostname}"

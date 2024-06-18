@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: wp-${wp_name}
+  labels:
+    owner: wp-${wp_name}
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem # Mount volume into Pod as a directory.
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: local-storage
+  local:
+    path: /srv/wp-${wp_name}/
+  nodeAffinity: # nodeAffinity is required when using local volumes.
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: topology.kubernetes.io/zone
+              operator: In
+              values:
+                - EU-FRANKFURT-1-AD-2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wordpress-storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5G
+  storageClassName: local-storage
+  volumeMode: Filesystem
+  volumeName: wp-${wp_name}
+  selector:
+    matchLabels:
+      owner: wp-${wp_name}

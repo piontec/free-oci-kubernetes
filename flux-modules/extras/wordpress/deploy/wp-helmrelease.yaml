@@ -1,0 +1,56 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: wordpress-${wp_name}
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: wordpress
+      version: "15.x"
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami
+  valuesFrom:
+    - kind: Secret
+      name: wp-admin-pass
+      valuesKey: wordpressPassword
+      targetPath: wordpressPassword
+    - kind: Secret
+      name: db-user-pass
+      valuesKey: pass
+      targetPath: "externalDatabase.password"
+  values:
+    fullnameOverride: wp-${wp_name}
+    wordpressUsername: admin
+    wordpressBlogName: ${wp_blog_name}
+    wordpressScheme: https
+    wordpressEmail: ${wp_email}
+    allowEmptyPassword: false
+    wordpressExtraConfigContent: |
+      @ini_set( 'upload_max_filesize' , '190M' );
+      @ini_set( 'post_max_size', '190M');
+      @ini_set( 'memory_limit', '256M' );
+      @ini_set( 'max_execution_time', '300' );
+      @ini_set( 'max_input_time', '300' );
+    service:
+      type: ClusterIP
+    ingress:
+      enabled: true
+      hostname: ${wp_hostname}
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      tls: true
+    persistence:
+      enabled: true
+      existingClaim: wordpress-storage
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+    mariadb:
+      enabled: false
+    externalDatabase:
+      host: mariadb.db.svc
+      user: wp-${wp_name}
+      database: wp-${wp_name}

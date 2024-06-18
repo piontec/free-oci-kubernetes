@@ -1,0 +1,41 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: wordpress-template
+  namespace: flux-system
+spec:
+  interval: 1h
+  dependsOn:
+    - name: kube-system-extra
+  path: ./flux/extras/wordpress-template/config/
+  prune: false
+  force: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-gpg
+  postBuild:
+    substitute:
+      wp_name: mine
+      wp_email: blog@none.com
+      wp_blog_name: "The Best Blog"
+      wp_hostname: none.com
+  #  patches:
+  #    - target:
+  #        kind: Kustomization
+  #        name: wordpress-\${wp_name}-deploy
+  #      patch: |-
+  #        - op: add
+  #          path: /spec/patches/-
+  #          value:
+  #            target:
+  #              kind: HelmRelease
+  #              name: wordpress-\$${wp_name}
+  #            patch: |
+  #              - op: add
+  #                path: /spec/values/ingress/extraHosts
+  #                value:
+  #                  - name: www.none.com

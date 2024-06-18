@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: wordpress-${wp_name}
+resources:
+  - ../../mariadb-database-and-user/db.yaml
+  - bitnami-wordpress-helmrepo.yaml
+  - persistent-volume.yaml
+  - wp-helmrelease.yaml
+  - wp-apache-dashboard-cm.yaml
