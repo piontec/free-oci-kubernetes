@@ -7,10 +7,11 @@ spec:
   chart:
     spec:
       chart: wordpress
-      version: "15.x"
+      version: "*"
       sourceRef:
         kind: HelmRepository
         name: bitnami
+  timeout: 10m
   valuesFrom:
     - kind: Secret
       name: wp-admin-pass
