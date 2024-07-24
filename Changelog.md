@@ -2,8 +2,12 @@
 
 ## Unreleased
 
-- added support for [`mariadb-operator`](https://github.com/mariadb-operator/mariadb-operator)
-- upgrade to k8s 1.29.1
+## 0.3.0 (2024.07.24)
+
+- added support for [`mariadb-operator`](./flux-modules/extras/mariadb/README.md)
+- added support for [`paperless`](./flux-modules/extras/paperless/README.md)
+- added support for [`wordpress`](./flux-modules/extras/wordpress/README.md)
+- upgrade to k8s 1.30.1
 
 ## 0.2.0 (2024.03.22)
 
