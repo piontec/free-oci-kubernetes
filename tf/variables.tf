@@ -1,7 +1,7 @@
 variable "k8s_version" {
   type        = string
   description = "k8s version"
-  default     = "v1.29.1"
+  default     = "v1.30.1"
 }
 variable "arm_pool_count" {
   type        = number
@@ -22,10 +22,10 @@ variable "arm_pool_images" {
   type        = list(string)
   description = "ready images for ARM pools"
   default = [
-    # "Oracle-Linux-8.9-aarch64-2024.01.26-0-OKE-1.29.1-679"
-    "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaa3mctwlkbkaj76pnlrmdr7w6dd4frkrhuqrdadpq4g67kh5gqbn3q",
-    # "Oracle-Linux-8.9-aarch64-2024.01.26-0-OKE-1.29.1-679"
-    "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaa3mctwlkbkaj76pnlrmdr7w6dd4frkrhuqrdadpq4g67kh5gqbn3q",
+    # "Oracle-Linux-8.9-aarch64-2024.05.29-0-OKE-1.30.1-707"
+    "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaxp4b3zykqz7qh3du66gtkoxboqbx3htdx3bq4tzlnem7z54po6yq",
+    # "Oracle-Linux-8.9-aarch64-2024.05.29-0-OKE-1.30.1-707"
+    "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaxp4b3zykqz7qh3du66gtkoxboqbx3htdx3bq4tzlnem7z54po6yq",
   ]
 }
 variable "enable_wireguard" {
