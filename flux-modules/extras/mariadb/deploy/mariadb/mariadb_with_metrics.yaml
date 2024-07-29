@@ -6,6 +6,7 @@ spec:
   envFrom:
     - configMapRef:
         name: mariadb-config
+  image: mariadb:11.4.2
   metrics:
     enabled: true
     passwordSecretKeyRef:

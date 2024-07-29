@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- upgrade `mariadb-operator` to v0.29 and `mariadb` engine to 11.4
+
 ## 0.3.0 (2024.07.24)
 
 - added support for [`mariadb-operator`](./flux-modules/extras/mariadb/README.md)
