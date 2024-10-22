@@ -20,6 +20,9 @@ spec:
     binlog_format=row
     innodb_autoinc_lock_mode=2
     max_allowed_packet=256M
+  myCnfConfigMapKeyRef:
+    key: my.cnf
+    name: mariadb-my-cnf
   port: 3306
   replicas: 1
   rootEmptyPassword: false
