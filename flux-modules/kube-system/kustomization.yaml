@@ -8,3 +8,5 @@ resources:
   - ingress-nginx-secgroup-oidc-cm.yaml
   - storageclass.yaml
   - ../kube-system-extra/kustomization-kube-system-extra.yaml
+  - vpa-helmrepo.yaml
+  - vpa-helmrelease.yaml
