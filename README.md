@@ -1,6 +1,6 @@
 # Free OCI Kubernetes Cluster with GitOps
 
-By applying this repository you will get a completely free (as of Q1 2024, using the free tier of Oracle Cloud) Kubernetes cluster that has important applications already
+By applying this repository you will get a completely free (still, as of Q1 2025, using the free tier of Oracle Cloud) Kubernetes cluster that has important applications already
 pre-installed and is fully GitOps drive using Flux CD.
 
 In more details, by following this guide you'll get:
@@ -68,28 +68,31 @@ Next, go to the `tf/` directory in the repository and fill in information about 
 Copy the template settings file `cp variables-private.tf.tpl variables-private.tf` and edit it:
 
 - insert your public SSH key as the `default` value for `ssh_public_key`
-- enter 'bastion allowed IPs' these are the IP addresses allowed to connect to the bastion host created for the cluster nodes
+- enter 'bastion allowed IPs', these are the IP addresses allowed to connect to the bastion host created for the cluster nodes
 - enter your default `compartment ID` - [here's how to find it](https://docs.oracle.com/en-us/iaas/Content/GSG/Tasks/contactingsupport_topic-Locating_Oracle_Cloud_Infrastructure_IDs.htm)
-- enter your region and 2 Availablity Domains within it
+- enter your region and 2 Availability Domains within it
+- enter the `git_url` value that points to your repository
+- don't enter `git_token`, as we want this value to be secret (don't save it on your hard drive).
 
-It's time to run `tofu` - be patient, the `apply` step can take pretty long (even up to an hour):
+Now, go to [github.com profile page](https://github.com/settings/profile) and generate a fine-grained private access token (PAT) with `repo` scope (Read and Write access to code). Here are [more details](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens). Copy the token and paste it into the `variables-private.tf` file as the `git_token` value.
+
+Export the PAT as environment variable
+
+```
+ export GH_TOKEN=YOUR_PAT
+```
+
+It's time to run `tofu` to bootstrap our cluster and obtain a `kube.config` file for it. Be patient, the first `apply` step can take pretty long (around half an hour):
 
 ```sh
 tofu init
-tofu apply
+tofu apply -var git_token="$GH_TOKEN" -target local_file.kube_config
 ```
 
-Now, we can create a `kube.config` file to access our cluster. Find your cluster's OCID (cloud provider's ID) or just go to the web console in OCI, list your clusters and click on the newly created one. Then, in the top menu,
-choose 'access cluster' and 'public access'. You will get a ready command that looks like this - run it:
+Your `kube.config` should be ready. You can test it with:
 
 ```sh
-oci ce cluster create-kubeconfig --cluster-id ocid1.cluster.oc1.REGION.aaaaaaaaopsxxxxxxxxxxxx --file $HOME/.kube/oci-test.config --region REGION --token-version 2.0.0  --kube-endpoint PUBLIC_ENDPOINT
-```
-
-Your kubeconfig should be ready. You can test it with:
-
-```sh
-export export KUBECONFIG=~/.kube/oci-test.config
+export export KUBECONFIG=.kube.config
 kubectl get nodes
 ```
 
@@ -119,7 +122,7 @@ cp .sops.yaml.tpl .sops.yaml
 
 then edit the file and paste your key fingerprint.
 
-Next, save the private key to your cluster _without putting ths key into the repo_:
+Next, save the private key to your cluster _without putting the key into the repo_:
 
 ```txt
 gpg --export-secret-keys --armor "[KEY_FINGERPRINT]" |
@@ -165,7 +168,23 @@ Additionally, you have to edit `postBuild` section of a few files to give inform
 - flux-modules/extras/wireguard/kustomization-wireguard.yaml
 - flux-modules/extras/wireguard/kustomization-wireguard-pre.yaml
 
-Make sure that the `tofu` run is complete as well. Now, you can commit everything into your GitOps repository and push the changes, adding all the created terraform and \*.yaml
+#### 4.4. Bootstrap Flux
+
+Stat by reading the [official documentation about bootstrapping Flux with Flux Operator](https://fluxcd.control-plane.io/operator/).
+
+Run `tofu` again, this time asking it to deploy the `flux-operator`
+
+```sh
+tofu apply -target helm_release.flux_operator var git_token="$GH_TOKEN"
+```
+
+Now, we can create an actual Flux instance that will deploy all the applications we have in our GitOps repository. Just run
+
+```sh
+tofu apply
+```
+
+Make sure that the `tofu` run is complete. Now, you can commit everything into your GitOps repository and push the changes, adding all the created terraform and \*.yaml
 files to your repo. Check that all the files are in, especially `tofu` state files:
 
 - tf/terraform.tfstate
@@ -177,43 +196,6 @@ files to your repo. Check that all the files are in, especially `tofu` state fil
 git commit -am "cluster bootstrap commit"
 git push
 ```
-
-#### 4.4. Bootstrap Flux
-
-Stat by reading the [official documentation about bootstrapping Flux with GitHub](https://fluxcd.io/flux/installation/bootstrap/github/).
-
-Make sure you noted your GitHub Private Access Token (PAT). Now, remove the flux config present in this repo (it's used for the auto-upgrade GitHub Action) and run the following command:
-
-```sh
-git rm -r flux/flux-system
-git commit -am "flux init"
-git push
-flux bootstrap github \
-  --token-auth \
-  --owner=piontec \
-  --repository=oci-test \
-  --branch=main \
-  --path=flux/ \
-  --personal
-```
-
-When asked, enter the PAT.
-
-Wait until it's done, then add back the needed Kustomizations into your config file `flux/flux-system/kustomization.yaml`, so it looks like this:
-
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - gotk-components.yaml
-  - gotk-sync.yaml
-  - ../flux-system-extra/kustomization-flux-system-extra.yaml
-  - ../kube-system/kustomization-kube-system.yaml
-  - ../monitoring/kustomization-monitoring.yaml
-  - ../wireguard/
-```
-
-Commit, push and give Flux some time to reconcile everything.
 
 Your work should be done now! From now on, Flux takes over and adjusts your cluster configuration exactly as in your GitOps repository on GitHub.
 

@@ -23,3 +23,15 @@ variable "ad_list" {
   description = "List of length 2 with the names of availability regions to use"
   default     = ["fJnH:EU-FRANKFURT-1-AD-1", "fJnH:EU-FRANKFURT-1-AD-2"]
 }
+variable "git_token" {
+  description = "Git PAT"
+  sensitive   = true
+  type        = string
+  default     = null
+}
+variable "git_url" {
+  description = "Git repository URL"
+  default     = "https://github.com/OWNER/REPO"
+  type        = string
+  nullable    = false
+}
