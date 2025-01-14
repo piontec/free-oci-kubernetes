@@ -4,13 +4,9 @@ metadata:
   name: wordpress-${wp_name}
 spec:
   interval: 1h
-  chart:
-    spec:
-      chart: wordpress
-      version: "*"
-      sourceRef:
-        kind: HelmRepository
-        name: bitnami
+  chartRef:
+    kind: OCIRepository
+    name: bitnami-wordpress
   timeout: 10m
   valuesFrom:
     - kind: Secret

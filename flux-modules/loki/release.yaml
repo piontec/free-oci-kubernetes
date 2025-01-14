@@ -6,6 +6,7 @@ spec:
   interval: 5m
   dependsOn:
     - name: kube-prometheus-stack
+      namespace: monitoring
   chart:
     spec:
       version: "2.x"
@@ -21,6 +22,7 @@ spec:
       enabled: true
     loki:
       enabled: true
+      url: http://loki-stack.loki:3100
       isDefault: false
       serviceMonitor:
         enabled: true

@@ -14,4 +14,3 @@ resources:
   - kube-echo.yaml
   - ingress-nginx-grafana-dashboard.yaml
   - flux/kustomization-monitoring-flux.yaml
-  - ./loki/

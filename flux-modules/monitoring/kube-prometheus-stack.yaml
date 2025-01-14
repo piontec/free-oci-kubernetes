@@ -144,6 +144,8 @@ spec:
           - secretName: ${grafana_domain}-tls
             hosts:
               - ${grafana_domain}
+    prometheus-node-exporter:
+      namespaceOverride: "kube-system"
     kubelet:
       enabled: false
     kubeControllerManager:
