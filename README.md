@@ -92,8 +92,8 @@ tofu apply -var git_token="$GH_TOKEN" -target local_file.kube_config
 Your `kube.config` should be ready. You can test it with:
 
 ```sh
-export export KUBECONFIG=.kube.config
-kubectl get nodes
+export KUBECONFIG=.kube.config
+kubectl version
 ```
 
 ### 4. Bootstrapping the GitOps setup
