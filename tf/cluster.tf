@@ -26,6 +26,18 @@ resource "oci_containerengine_cluster" "k8s_cluster" {
   }
 }
 
+data "oci_containerengine_cluster_kube_config" "k8s_cluster_kube_config" {
+    #Required
+    cluster_id = oci_containerengine_cluster.k8s_cluster.id
+}
+
+resource "local_file" "kube_config" {
+    depends_on = [oci_containerengine_node_pool.k8s_node_pool]
+    content  = data.oci_containerengine_cluster_kube_config.k8s_cluster_kube_config.content
+    filename = ".kube.config"
+    file_permission = 0400
+}
+
 resource "oci_containerengine_node_pool" "k8s_node_pool" {
   count              = var.arm_pool_count
   cluster_id         = oci_containerengine_cluster.k8s_cluster.id
@@ -33,7 +45,7 @@ resource "oci_containerengine_node_pool" "k8s_node_pool" {
   kubernetes_version = var.k8s_version
   name               = "free-k8s-node-pool-${count.index}"
 
-  depends_on = [oci_core_volume.arm_instance_volume]
+  depends_on = [oci_core_volume.arm_instance_volume, oci_identity_policy.k8s_instance_policy]
 
   node_config_details {
     placement_configs {
@@ -87,6 +99,7 @@ resource "oci_identity_dynamic_group" "k8s_instances" {
 }
 
 resource "oci_identity_policy" "k8s_instance_policy" {
+  depends_on = [oci_identity_dynamic_group.k8s_instances]
   compartment_id = var.compartment_id
   description    = "allow k8s instances to mount disks"
   name           = "k8s_allow_disks"
