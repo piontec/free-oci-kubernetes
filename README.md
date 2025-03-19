@@ -92,8 +92,9 @@ tofu apply -var git_token="$GH_TOKEN" -target local_file.kube_config
 Your `kube.config` should be ready. You can test it with:
 
 ```sh
-export KUBECONFIG=.kube.config
+export KUBECONFIG=$PWD/.kube.config
 kubectl version
+kubectl get nodes
 ```
 
 ### 4. Bootstrapping the GitOps setup
@@ -104,6 +105,8 @@ While waiting for the infrastructure to be created, we can start filling in conf
 
 First, we have to configure an encryption tool, that will help us to store all the secrets in the repository in an encrypted form, but one
 that is still automatically decrypted on the cluster.
+
+Switch to the repo root folder.
 
 If you don't have a ready GPG key, [here's a more detailed manual by GitHub about how to create one](https://docs.github.com/en/authentication/managing-commit-signature-verification/).
 
@@ -125,6 +128,7 @@ then edit the file and paste your key fingerprint.
 Next, save the private key to your cluster _without putting the key into the repo_:
 
 ```txt
+kubectl create ns flux-system
 gpg --export-secret-keys --armor "[KEY_FINGERPRINT]" |
 kubectl create secret generic sops-gpg \
 --namespace=flux-system \
@@ -175,13 +179,22 @@ Stat by reading the [official documentation about bootstrapping Flux with Flux O
 Run `tofu` again, this time asking it to deploy the `flux-operator`
 
 ```sh
-tofu apply -target helm_release.flux_operator var git_token="$GH_TOKEN"
+# run from the tf/ directory
+tofu apply -target helm_release.flux_operator -var git_token="$GH_TOKEN"
 ```
 
-Now, we can create an actual Flux instance that will deploy all the applications we have in our GitOps repository. Just run
+Running
 
 ```sh
-tofu apply
+kubectl -n flux-system get deploy
+```
+
+should show you that the `flux-operator` deployment is up and running (`Ready: 1/1`).
+
+Now, we can create an actual Flux instance that will deploy all the applications we have in our GitOps repository. We can do full `tofu apply` now to make sure our full `tofu` config is deployed:
+
+```sh
+tofu apply -var git_token="$GH_TOKEN"
 ```
 
 Make sure that the `tofu` run is complete. Now, you can commit everything into your GitOps repository and push the changes, adding all the created terraform and \*.yaml
