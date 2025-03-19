@@ -1,0 +1,29 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: flux-monitoring
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: monitoring
+  interval: 1h
+  path: ./flux-modules/flux-system-extra/monitoring/
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-gpg
+  patches:
+    - target:
+        kind: Kustomization
+        group: kustomize.toolkit.fluxcd.io
+        version: v1beta2
+        name: monitoring-flux
+      patch: |-
+        - op: replace
+          path: /metadata/namespace
+          value: flux-system
