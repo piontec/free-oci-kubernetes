@@ -2,12 +2,14 @@
 
 ## Unreleased
 
+## 0.5.0 (2025.03.20)
+
+- Upgrade kubernetes to 1.32.1
+
 ## 0.4.0 (2025.03.20)
 
 - Upgrade kubernetes to 1.31.1
-
-* Upgrade `mariadb-operator` to v0.29 and `mariadb` engine to 11.4
-
+- Upgrade `mariadb-operator` to v0.29 and `mariadb` engine to 11.4
 - Add VPA definitions for wordpress
 - Add vertical-pod-autoscaler to kube-system apps
 - Refactor: move flux monitoring to a separate folder and kustomization
