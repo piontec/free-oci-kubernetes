@@ -1,9 +1,0 @@
-apiVersion: source.toolkit.fluxcd.io/v1beta2
-kind: GitRepository
-metadata:
-  name: flux-monitoring
-spec:
-  interval: 1h
-  ref:
-    branch: main
-  url: https://github.com/fluxcd/flux2-monitoring-example

@@ -13,4 +13,3 @@ resources:
   - flux-monitoring-config-kustomization.yaml
   - kube-echo.yaml
   - ingress-nginx-grafana-dashboard.yaml
-  - flux/kustomization-monitoring-flux.yaml
