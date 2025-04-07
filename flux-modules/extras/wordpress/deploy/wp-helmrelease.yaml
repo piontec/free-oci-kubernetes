@@ -51,3 +51,14 @@ spec:
       host: mariadb.db.svc
       user: wp-${wp_name}
       database: wp-${wp_name}
+    pdb:
+      create: false
+    resources:
+      limits:
+        cpu: 300m
+        memory: 384Mi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+    updateStrategy:
+      type: Recreate
