@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- switch the CNI to cilium
+
 ## 0.5.0 (2025.03.20)
 
 - Upgrade kubernetes to 1.32.1
