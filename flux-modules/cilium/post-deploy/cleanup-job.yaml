@@ -1,0 +1,104 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: post-cilium-hook
+rules:
+  # Permission to get the DaemonSet named 'cilium'
+  # Note: For a ClusterRole, resourceNames applies to the named resource in any namespace
+  # where this role is bound.
+  - apiGroups: ["apps"]
+    resources: ["daemonsets"]
+    resourceNames: ["cilium"]
+    verbs: ["get"]
+
+  # Permission to get all CiliumEndpoint objects in all namespaces
+  # Ensure 'cilium.io' is the correct API group for your CiliumEndpoint CRDs.
+  - apiGroups: ["cilium.io"]
+    resources: ["ciliumendpoints"]
+    verbs: ["get", "list", "watch"]
+
+  # Permission to get all Pods in all namespaces
+  - apiGroups: [""] # Core API group
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+
+  # Permission to delete any Pod in any namespace
+  - apiGroups: [""] # Core API group
+    resources: ["pods"]
+    verbs: ["delete"]
+
+  # Permission to delete the DaemonSet named 'kube-flannel-ds'
+  # Similar to the 'cilium' DaemonSet, resourceNames applies to 'kube-flannel-ds'
+  # in any namespace where this role is bound.
+  - apiGroups: ["apps"]
+    resources: ["daemonsets"]
+    resourceNames: ["kube-flannel-ds"]
+    verbs: ["get", "delete"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: post-cilium-hook-sa
+  namespace: kube-system # Or any other namespace where your Job will run
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: post-cilium-hook-binding
+subjects:
+  - kind: ServiceAccount
+    name: post-cilium-hook-sa
+    namespace: kube-system # Must match the ServiceAccount's namespace
+roleRef:
+  kind: ClusterRole
+  name: post-cilium-hook # Name of the ClusterRole defined above
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: restart-pods-after-cilium-ready
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    spec:
+      serviceAccountName: post-cilium-hook-sa
+      restartPolicy: Never # required for the feature
+      containers:
+        - name: sh
+          image: bitnami/kubectl:latest
+          command: # The jobs fails as there is at least one failed index
+            # (all even indexes fail in here), yet all indexes
+            # are executed as maxFailedIndexes is not exceeded.
+            - bash
+            - -c
+            - |
+              set -e
+              CILIUM_PODS=$(kubectl -n kube-system get ds cilium -o jsonpath="{.status.numberReady}")
+              if [[ $CILIUM_PODS -lt 1 ]]; then
+              	echo "Cilium pods not running, exiting"
+              	exit 1
+              fi
+
+              # get cilium status
+              function all_ceps { kubectl get cep --all-namespaces -o json | jq -r '.items[].metadata | .namespace + "/" + .name'; }
+              function all_pods { kubectl get pods --all-namespaces -o json | jq -r '.items[] | select((.status.phase=="Running" or .status.phase=="Pending") and (.spec.hostNetwork==true | not)) | .metadata | .namespace + "/" + .name'; }
+              pods_to_restart=$(sort <(all_ceps) <(all_pods) | uniq -u)
+
+              if [[ $pods_to_restart != "" ]]; then
+                echo "Restarting pods"
+                for np in $pods_to_restart; do
+                	ns="${np%/*}"
+                	pod="${np#*/}"
+                	echo "Restarting pod: $ns/$pod"
+                	kubectl -n "$ns" delete pod "$pod"
+                done
+              else
+              	echo "All pods already running with cilium"
+              	if kubectl -n kube-system get ds kube-flannel-ds >/dev/null; then
+              		echo "Deleting flannel deamon set"
+              		kubectl -n kube-system delete ds kube-flannel-ds
+              	fi
+              fi
+              echo "All done"

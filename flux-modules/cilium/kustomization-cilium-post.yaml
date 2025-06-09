@@ -1,0 +1,18 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: cilium-post-deploy
+  namespace: flux-system
+spec:
+  interval: 1h
+  path: ./flux-modules/cilium/post-deploy
+  prune: true
+  dependsOn:
+    - name: cilium
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-gpg
