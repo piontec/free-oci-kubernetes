@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.6.0 (2025.06.09)
+
+- chg: set wordpress deployment's rollingStrategy to recreate to avoid volume blocking on upgrades
+- remove redundant flux-monitoring from the monitoring kustomization
 - switch the CNI to cilium
 
 ## 0.5.0 (2025.03.20)
