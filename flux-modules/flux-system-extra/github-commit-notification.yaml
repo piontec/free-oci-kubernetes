@@ -1,4 +1,4 @@
-apiVersion: notification.toolkit.fluxcd.io/v1beta1
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Provider
 metadata:
   name: oci-infra-repo
@@ -10,7 +10,7 @@ spec:
   secretRef:
     name: github-api-token
 ---
-apiVersion: notification.toolkit.fluxcd.io/v1beta1
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
 metadata:
   name: flux-system-kustomization

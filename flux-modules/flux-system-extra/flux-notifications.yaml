@@ -1,4 +1,4 @@
-apiVersion: notification.toolkit.fluxcd.io/v1beta1
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Provider
 metadata:
   name: slack
@@ -9,7 +9,7 @@ spec:
   secretRef:
     name: slack-flux-notification-url
 ---
-apiVersion: notification.toolkit.fluxcd.io/v1beta1
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Provider
 metadata:
   name: alertmanager
@@ -18,7 +18,7 @@ spec:
   type: alertmanager
   address: http://kube-prometheus-stack-alertmanager.kube-system.svc:9093/
 ---
-apiVersion: notification.toolkit.fluxcd.io/v1beta1
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
 metadata:
   name: default-catchall
