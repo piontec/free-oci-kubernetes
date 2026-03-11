@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2026.03.11
+
 ### Added
 
 - Add Grafana Alloy for monitoring (replaces Prometheus Node Exporter and Promtail)
