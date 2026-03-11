@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### Added
+
+- Add Grafana Alloy for monitoring (replaces Prometheus Node Exporter and Promtail)
+- Add MariaDB exporter configuration
+- Add Grafana Alloy Helm repository
+
+### Changed
+
+- Update Kubernetes to 1.34.2
+- Update mariadb-operator to 25.10
+- Update paperless-ngx image to 2.20 series
+- Update Tika link for paperless-ngx
+
+### Removed
+
+- Remove Prometheus Node Exporter (replaced by Grafana Alloy)
+- Remove Promtail (replaced by Grafana Alloy)
+
 ## 0.6.0 (2025.06.09)
 
 - chg: set wordpress deployment's rollingStrategy to recreate to avoid volume blocking on upgrades
