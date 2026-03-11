@@ -1,0 +1,56 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana-alloy
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: alloy
+      version: "*"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana-alloy
+      interval: 60m
+  values:
+    rbac:
+      create: true
+    serviceAccount:
+      create: true
+    serviceMonitor:
+      enabled: true
+    alloy:
+      configMap:
+        content: |
+          discovery.kubernetes "pods" {
+            role = "pod"
+            namespaces {
+              names = []
+            }
+          }
+
+          loki.source.kubernetes "pods" {
+            targets    = discovery.kubernetes.pods.targets
+            forward_to = [loki.write.loki.receiver]
+          }
+
+          loki.write "loki" {
+            endpoint {
+              url = "http://loki-stack.loki:3100/loki/api/v1/push"
+            }
+          }
+
+          prometheus.exporter.unix "node" {
+            include_exporter_metrics = true
+          }
+
+          prometheus.scrape "alloy" {
+            targets = prometheus.exporter.unix.node.targets
+            forward_to = [prometheus.remote_write.metrics.receiver]
+          }
+
+          prometheus.remote_write "metrics" {
+            endpoint {
+              url = "http://kube-prometheus-stack-prometheus.monitoring:9090/api/v1/write"
+            }
+          }
