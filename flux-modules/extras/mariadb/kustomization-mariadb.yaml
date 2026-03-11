@@ -17,3 +17,6 @@ spec:
     provider: sops
     secretRef:
       name: sops-gpg
+  postBuild:
+    substitute:
+      mariadb_operator_version: "25.10.*"

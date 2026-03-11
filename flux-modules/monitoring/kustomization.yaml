@@ -12,4 +12,6 @@ resources:
   - flux-gitrepo.yaml
   - flux-monitoring-config-kustomization.yaml
   - kube-echo.yaml
+  - grafana-alloy-helmrepo.yaml
+  - grafana-alloy.yaml
   - ingress-nginx-grafana-dashboard.yaml

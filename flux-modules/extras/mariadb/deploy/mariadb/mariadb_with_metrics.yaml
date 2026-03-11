@@ -13,6 +13,8 @@ spec:
       key: password
       name: mariadb-metrics-password
     username: mariadb-metrics
+    exporter:
+      image: docker.io/prom/mysqld-exporter:v0.15.1
   myCnf: |
     [mysqld]
     bind-address=0.0.0.0

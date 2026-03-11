@@ -145,6 +145,7 @@ spec:
             hosts:
               - ${grafana_domain}
     prometheus-node-exporter:
+      enabled: false
       namespaceOverride: "kube-system"
     kubelet:
       enabled: false
