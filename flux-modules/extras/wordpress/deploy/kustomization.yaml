@@ -8,3 +8,4 @@ resources:
   - wp-helmrelease.yaml
   - wp-apache-dashboard-cm.yaml
   - wp-vpa.yaml
+  - wp-httproute.yaml

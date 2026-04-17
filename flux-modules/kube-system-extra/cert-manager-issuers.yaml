@@ -14,8 +14,10 @@ spec:
     # Enable the HTTP-01 challenge provider
     solvers:
       - http01:
-          ingress:
-            class: nginx
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: cilium-gw
+                namespace: kube-system
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -33,5 +35,7 @@ spec:
     # Enable the HTTP-01 challenge provider
     solvers:
       - http01:
-          ingress:
-            class: nginx
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: cilium-gw
+                namespace: kube-system

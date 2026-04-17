@@ -11,4 +11,5 @@ resources:
   - persistent-volume-paperless.yaml
   - paperless-helmrelease.yaml
   - paperless-extra-deployments.yaml
+  - paperless-httproute.yaml
   - ./redis

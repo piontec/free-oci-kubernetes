@@ -33,14 +33,12 @@ spec:
     service:
       type: ClusterIP
     ingress:
-      enabled: true
-      hostname: ${wp_hostname}
-      annotations:
-        cert-manager.io/cluster-issuer: "letsencrypt-prod"
-      tls: true
+      enabled: false
     persistence:
       enabled: true
       existingClaim: wordpress-storage
+    containerSecurityContext:
+      enabled: true
     metrics:
       enabled: true
       serviceMonitor:
