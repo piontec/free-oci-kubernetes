@@ -4,9 +4,9 @@ resources:
   - cert-manager-helmrepo.yaml
   - cilium-gatewayclass.yaml
   - cilium-gateway.yaml
-  #- external-dns-helmrelease.yaml
-  #- external-dns-helmrepo.yaml
-  #- external-dns-secret.yaml
+  - external-dns-helmrelease.yaml
+  - external-dns-helmrepo.yaml
+  #  - external-dns-secret.yaml
   - storageclass.yaml
   - vpa-helmrepo.yaml
   - vpa-helmrelease.yaml

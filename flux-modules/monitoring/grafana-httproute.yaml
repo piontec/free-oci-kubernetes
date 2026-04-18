@@ -3,8 +3,6 @@ kind: HTTPRoute
 metadata:
   name: grafana-route
   namespace: monitoring
-  annotations:
-    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
 spec:
   parentRefs:
     - name: cilium-gw
