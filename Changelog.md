@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 2026.04.18_2
+
+### Added
+
+Support for external-dns
+
 ## 2026.04.18
 
 ### Changed
