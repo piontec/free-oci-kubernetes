@@ -1,6 +1,5 @@
 provider "oci" {
   region              = var.region
-  # config_file_profile = "test"
 }
 
 terraform {
@@ -16,6 +15,10 @@ terraform {
     helm = {
       source  = "hashicorp/helm"
       version = ">= 2.12"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = ">= 3.2"
     }
   }
 }

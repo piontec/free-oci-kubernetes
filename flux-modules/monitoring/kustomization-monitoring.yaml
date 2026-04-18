@@ -16,5 +16,6 @@ spec:
       name: sops-gpg
   postBuild:
     substitute:
-      grafana_domain: grafana.awesome.localhost
-      grafana_url: https://grafana.awesome.localhost/grafana
+      grafana_domain: "YOUR_DOMAIN"
+      grafana_url: "https://YOUR_DOMAIN/grafana"
+      oci_region: "eu-frankfurt-1"

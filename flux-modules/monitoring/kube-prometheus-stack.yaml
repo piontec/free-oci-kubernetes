@@ -129,21 +129,11 @@ spec:
           access: proxy
           readOnly: false
           jsonData:
-            defaultRegion: "eu-frankfurt-1"
+            defaultRegion: "${oci_region}"
             environment: "OCI Instance"
             profile0: "DEFAULT"
       ingress:
-        enabled: true
-        ingressClassName: nginx
-        hosts:
-          - ${grafana_domain}
-        path: /grafana
-        annotations:
-          cert-manager.io/cluster-issuer: "letsencrypt-prod"
-        tls:
-          - secretName: ${grafana_domain}-tls
-            hosts:
-              - ${grafana_domain}
+        enabled: false
     prometheus-node-exporter:
       enabled: false
       namespaceOverride: "kube-system"

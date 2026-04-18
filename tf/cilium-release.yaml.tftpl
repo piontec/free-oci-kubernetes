@@ -1,3 +1,5 @@
+# AUTO-GENERATED from Terraform. Do not edit manually.
+#
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -13,6 +15,20 @@ spec:
         name: cilium
       interval: 120m
   values:
+    gatewayAPI:
+      enabled: true
+    kubeProxyReplacement: true
+    kubeProxyReplacementHealthzBindAddr: "0.0.0.0:10256"
+    k8sServiceHost: "${k8s_api_ip}"
+    k8sServicePort: "6443"
+    hostServices:
+      enabled: true
+    nodePort:
+      enabled: true
+    externalIPs:
+      enabled: true
+    bpf:
+      masquerade: true
     hubble:
       enabled: true
       metrics:

@@ -158,3 +158,9 @@ resource "local_file" "ingress_sec_group_oidc" {
   filename        = "../flux-modules/kube-system/ingress-nginx-secgroup-oidc-cm.yaml"
   file_permission = "0640"
 }
+
+resource "local_file" "gateway_nlb_patch" {
+  content         = templatefile("gateway-nlb-patch.yaml.tftpl", { nsg_ocid = oci_core_network_security_group.nginx_ingress_network_security_group.id })
+  filename        = "../flux-modules/kube-system/gateway-nlb-patch.yaml"
+  file_permission = "0640"
+}

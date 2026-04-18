@@ -1,6 +1,6 @@
 // Create a Kubernetes secret with the Git credentials
 // if a Git token is provided.
-resource "kubernetes_secret" "git_auth" {
+resource "kubernetes_secret_v1" "git_auth" {
   count      = var.git_token != "" ? 1 : 0
 
   metadata {
@@ -11,6 +11,11 @@ resource "kubernetes_secret" "git_auth" {
   data = {
     username = "git"
     password = var.git_token
+  }
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [data]
   }
 
   type = "Opaque"
@@ -69,4 +74,3 @@ resource "kubernetes_manifest" "flux_instance" {
     }
   }
 }
-

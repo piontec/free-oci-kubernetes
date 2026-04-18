@@ -38,6 +38,14 @@ resource "local_file" "kube_config" {
     file_permission = 0400
 }
 
+resource "local_file" "cilium_release" {
+  content  = templatefile("cilium-release.yaml.tftpl", {
+    k8s_api_ip = split(":", oci_containerengine_cluster.k8s_cluster.endpoints[0].public_endpoint)[0]
+  })
+  filename        = "../flux-modules/cilium/deploy/release.yaml"
+  file_permission = "0640"
+}
+
 resource "oci_containerengine_node_pool" "k8s_node_pool" {
   count              = var.arm_pool_count
   cluster_id         = oci_containerengine_cluster.k8s_cluster.id

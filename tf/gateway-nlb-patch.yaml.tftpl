@@ -1,0 +1,10 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: cilium-gw
+spec:
+  infrastructure:
+    annotations:
+      oci.oraclecloud.com/load-balancer-type: "nlb"
+      oci-network-load-balancer.oraclecloud.com/security-list-management-mode: "None"
+      oci-network-load-balancer.oraclecloud.com/oci-network-security-groups: "${nsg_ocid}"
