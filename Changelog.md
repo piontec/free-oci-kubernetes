@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 2026.04.18
+
+### Changed
+
+- Whole setup was moved to gateway API provided by cilium
+- Cilium is running now in kube-proxy-less mode
+- Nginx-ingress and all the configured ingresses were removed
+
 ## 2026.03.11
 
 ### Added
