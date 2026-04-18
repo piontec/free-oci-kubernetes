@@ -82,18 +82,7 @@ spec:
         enabled: false
     ingress:
       main:
-        enabled: true
-        annotations:
-          nginx.ingress.kubernetes.io/proxy-body-size: 64m
-          cert-manager.io/cluster-issuer: "letsencrypt-prod"
-        hosts:
-          - host: [YOUR-HOST]
-            paths:
-              - path: /
-        tls:
-          - secretName: [YOUR-HOST]
-            hosts:
-              - [YOUR-HOST]
+        enabled: false
     postgresql:
       enabled: false
     mariadb:

@@ -23,19 +23,3 @@ spec:
       wp_email: blog@none.com
       wp_blog_name: "The Best Blog"
       wp_hostname: none.com
-  #  patches:
-  #    - target:
-  #        kind: Kustomization
-  #        name: wordpress-\${wp_name}-deploy
-  #      patch: |-
-  #        - op: add
-  #          path: /spec/patches/-
-  #          value:
-  #            target:
-  #              kind: HelmRelease
-  #              name: wordpress-\$${wp_name}
-  #            patch: |
-  #              - op: add
-  #                path: /spec/values/ingress/extraHosts
-  #                value:
-  #                  - name: www.none.com
