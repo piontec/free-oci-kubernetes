@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 2026.04.20
+
+### Changed
+
+- Fix: terraform file generation issues fixed
+
 ## 2026.04.18_2
 
 ### Added
