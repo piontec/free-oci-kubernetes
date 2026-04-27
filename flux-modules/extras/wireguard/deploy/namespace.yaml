@@ -2,3 +2,7 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: wireguard
+  labels:
+    # privileged required: initContainer needs SYS_MODULE, main container needs NET_ADMIN
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/enforce-version: latest

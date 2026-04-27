@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: monitoring
 resources:
   - namespace.yaml
+  - netpol.yaml
   - prometheus-community-helmrepo.yaml
   - kube-prometheus-stack.yaml
   - prom-stack-grafana-pass-secret.yaml

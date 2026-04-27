@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: paperless
 resources:
   - namespace.yaml
+  - netpol.yaml
   - paperless-helmrepo.yaml
   - ../../mariadb-database-and-user/db.yaml
   - db-paperless-secret.yaml

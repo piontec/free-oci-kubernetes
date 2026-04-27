@@ -13,6 +13,9 @@ spec:
       labels:
         app: wireguard
     spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       nodeSelector:
         kubernetes.io/os: linux
       volumes:
@@ -39,6 +42,9 @@ spec:
             capabilities:
               add:
                 - SYS_MODULE
+            # RuntimeDefault blocks finit_module/init_module needed by modprobe
+            seccompProfile:
+              type: Unconfined
       containers:
         - name: wireguard
           image: linuxserver/wireguard:v1.0.20210914-ls22

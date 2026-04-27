@@ -22,17 +22,48 @@ resource "kubernetes_secret_v1" "git_auth" {
 }
 
 // Install the Flux Operator.
-resource "helm_release" "flux_operator" {
-  name       = "flux-operator"
-  namespace  = "flux-system"
-  repository = "oci://ghcr.io/controlplaneio-fluxcd/charts"
-  chart      = "flux-operator"
-  create_namespace = true
+removed {
+  from = helm_release.flux_operator
+
+  lifecycle {
+    destroy = false
+  }
+}
+
+resource "null_resource" "flux_operator_bootstrap" {
+  triggers = {
+    name       = "flux-operator"
+    namespace  = "flux-system"
+    repository = "oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator"
+  }
+
+  provisioner "local-exec" {
+    working_dir = path.module
+    command     = <<-EOT
+      set -eu
+
+      if ! command -v helm >/dev/null 2>&1; then
+        echo "helm CLI is required to bootstrap flux-operator" >&2
+        exit 1
+      fi
+
+      if helm status flux-operator -n flux-system >/dev/null 2>&1; then
+        echo "flux-operator already exists, leaving it unchanged"
+        exit 0
+      fi
+
+      helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
+        --namespace flux-system \
+        --create-namespace \
+        --wait \
+        --timeout 5m
+    EOT
+  }
 }
 
 // Configure the Flux instance.
 resource "kubernetes_manifest" "flux_instance" {
-  depends_on = [helm_release.flux_operator]
+  depends_on = [null_resource.flux_operator_bootstrap]
 
   manifest = {
     "apiVersion"= "fluxcd.controlplane.io/v1"

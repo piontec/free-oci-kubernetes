@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: wireguard
 resources:
   - namespace.yaml
+  - netpol.yaml
   - deployment.yaml
   - service.yaml
   - storage.yaml

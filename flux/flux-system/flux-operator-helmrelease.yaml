@@ -5,6 +5,15 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  timeout: 5m
+  driftDetection:
+    mode: enabled
   releaseName: flux-operator
   chartRef:
     kind: OCIRepository

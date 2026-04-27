@@ -1,0 +1,66 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: paperless-egress
+  namespace: paperless
+spec:
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # Paperless → MariaDB
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: db
+      toPorts:
+        - ports:
+            - port: "3306"
+              protocol: TCP
+    # Intra-namespace: paperless ↔ redis (6379), tika (9998), gotenberg (3000)
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: paperless
+    # Backblaze B2 backup + apt package installs (tesseract OCR language packs)
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
+    # Gmail IMAP email ingestion
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "993"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: paperless-ingress
+  namespace: paperless
+spec:
+  endpointSelector: {}
+  ingress:
+    # Gateway API envoy → Paperless UI
+    - fromEntities:
+        - ingress
+    # Prometheus scraping
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+    # Intra-namespace traffic
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: paperless

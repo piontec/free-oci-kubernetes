@@ -7,9 +7,17 @@ spec:
   install:
     remediation:
       retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
   upgrade:
     remediation:
       retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
+  driftDetection:
+    mode: enabled
   chartRef:
     kind: OCIRepository
     name: bitnami-wordpress

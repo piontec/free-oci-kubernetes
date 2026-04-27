@@ -18,80 +18,19 @@ module "vcn" {
   create_service_gateway  = true
 }
 
-resource "oci_core_security_list" "private_subnet_sl" {
-  compartment_id = var.compartment_id
-  vcn_id         = module.vcn.vcn_id
+removed {
+  from = oci_core_security_list.private_subnet_sl
 
-  display_name = "free-k8s-private-subnet-sl"
-
-  egress_security_rules {
-    stateless        = false
-    destination      = "0.0.0.0/0"
-    destination_type = "CIDR_BLOCK"
-    protocol         = "all"
-  }
-
-  ingress_security_rules {
-    stateless   = false
-    source      = "10.0.0.0/16"
-    source_type = "CIDR_BLOCK"
-    protocol    = "all"
+  lifecycle {
+    destroy = false
   }
 }
 
-locals {
-  public_tcp_ports = [80, 443, 6443]
-  public_udp_ports = var.enable_wireguard == true ? [30111] : []
-}
+removed {
+  from = oci_core_security_list.public_subnet_sl
 
-resource "oci_core_security_list" "public_subnet_sl" {
-  compartment_id = var.compartment_id
-  vcn_id         = module.vcn.vcn_id
-
-  display_name = "free-k8s-public-subnet-sl"
-
-  egress_security_rules {
-    destination      = "0.0.0.0/0"
-    destination_type = "CIDR_BLOCK"
-    protocol         = "all"
-    stateless        = false
-  }
-
-  ingress_security_rules {
-    stateless   = false
-    source      = "10.0.0.0/16"
-    source_type = "CIDR_BLOCK"
-    protocol    = "all"
-  }
-
-  dynamic "ingress_security_rules" {
-    for_each = local.public_tcp_ports
-    content {
-      protocol    = "6"
-      source      = "0.0.0.0/0"
-      source_type = "CIDR_BLOCK"
-      stateless   = false
-
-      tcp_options {
-        max = ingress_security_rules.value
-        min = ingress_security_rules.value
-      }
-    }
-  }
-
-  dynamic "ingress_security_rules" {
-    for_each = local.public_udp_ports
-    content {
-      protocol    = "17"
-      source      = "0.0.0.0/0"
-      source_type = "CIDR_BLOCK"
-      stateless   = false
-
-      udp_options {
-        max = ingress_security_rules.value
-        min = ingress_security_rules.value
-      }
-    }
+  lifecycle {
+    destroy = false
   }
 }
 
@@ -101,9 +40,12 @@ resource "oci_core_subnet" "vcn_private_subnet" {
   cidr_block     = "10.0.1.0/24"
 
   route_table_id             = module.vcn.nat_route_id
-  security_list_ids          = [oci_core_security_list.private_subnet_sl.id]
   display_name               = "free-k8s-private-subnet"
   prohibit_public_ip_on_vnic = true
+
+  lifecycle {
+    ignore_changes = [security_list_ids]
+  }
 }
 
 resource "oci_core_subnet" "vcn_public_subnet" {
@@ -111,9 +53,12 @@ resource "oci_core_subnet" "vcn_public_subnet" {
   vcn_id         = module.vcn.vcn_id
   cidr_block     = "10.0.0.0/24"
 
-  route_table_id    = module.vcn.ig_route_id
-  security_list_ids = [oci_core_security_list.public_subnet_sl.id]
-  display_name      = "free-k8s-public-subnet"
+  route_table_id = module.vcn.ig_route_id
+  display_name   = "free-k8s-public-subnet"
+
+  lifecycle {
+    ignore_changes = [security_list_ids]
+  }
 }
 
 resource "oci_core_network_security_group" "nginx_ingress_network_security_group" {
@@ -153,8 +98,37 @@ resource "oci_core_network_security_group_security_rule" "nginx_ingress_network_
   }
 }
 
-resource "local_file" "gateway_nlb_patch" {
-  content         = templatefile("gateway-nlb-patch.yaml.tftpl", { nsg_ocid = oci_core_network_security_group.nginx_ingress_network_security_group.id })
-  filename        = "../flux-modules/kube-system/gateway-nlb-patch.yaml"
-  file_permission = "0640"
+removed {
+  from = local_file.gateway_nlb_patch
+
+  lifecycle {
+    destroy = false
+  }
+}
+
+resource "null_resource" "gateway_nlb_patch" {
+  triggers = {
+    content_sha = sha256(templatefile("gateway-nlb-patch.yaml.tftpl", {
+      nsg_ocid = oci_core_network_security_group.nginx_ingress_network_security_group.id
+    }))
+  }
+
+  provisioner "local-exec" {
+    working_dir = path.module
+    command = <<-EOT
+      set -eu
+
+      if [ -e ../flux-modules/kube-system/gateway-nlb-patch.yaml ]; then
+        echo "../flux-modules/kube-system/gateway-nlb-patch.yaml already exists, leaving it unchanged"
+        exit 0
+      fi
+
+      cat > ../flux-modules/kube-system/gateway-nlb-patch.yaml <<'EOF'
+${templatefile("gateway-nlb-patch.yaml.tftpl", {
+    nsg_ocid = oci_core_network_security_group.nginx_ingress_network_security_group.id
+})}
+EOF
+      chmod 0640 ../flux-modules/kube-system/gateway-nlb-patch.yaml
+    EOT
+}
 }

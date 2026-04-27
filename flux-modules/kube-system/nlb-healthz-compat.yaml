@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nlb-healthz-compat
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: nlb-healthz-compat
+  template:
+    metadata:
+      labels:
+        app: nlb-healthz-compat
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: healthz
+          image: busybox:1.36
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              mkdir -p /www
+              printf 'ok\n' >/www/healthz
+              exec httpd -f -p 10256 -h /www
+          ports:
+            - containerPort: 10256
+              hostPort: 10256
+              name: healthz
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              host: 127.0.0.1
+              path: /healthz
+              port: 10256
+          livenessProbe:
+            httpGet:
+              host: 127.0.0.1
+              path: /healthz
+              port: 10256
+          resources:
+            requests:
+              cpu: 5m
+              memory: 8Mi

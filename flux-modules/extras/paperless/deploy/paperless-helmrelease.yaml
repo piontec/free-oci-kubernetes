@@ -7,9 +7,18 @@ spec:
   install:
     remediation:
       retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
   upgrade:
     remediation:
       retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
+  timeout: 5m
+  driftDetection:
+    mode: enabled
   chart:
     spec:
       chart: paperless-ngx
@@ -95,3 +104,42 @@ spec:
       enabled: false
     redis:
       enabled: false
+    sidecars:
+      backup:
+        command: ["/bin/bash"]
+        args:
+          [
+            "-c",
+            'set -Eeuo pipefail; info () { printf "%(%Y-%m-%d %H:%M:%S)T %s\n" -1 "$1"; }; on_err() {
+            status=$?; info "Backup failed with exit code $status."; exit "$status"; }; trap on_err ERR;
+            INIT_DELAY="10m"; DELAY="1d"; B2_VERSION="4.6.0"; info "Initial sleep of $INIT_DELAY to let the
+            system start..."; sleep "$INIT_DELAY"; info "Installing pinned b2 version $B2_VERSION..."; python
+            -m pip install --no-cache-dir "b2==$B2_VERSION" > /dev/null; info "Backup will be done every
+            $DELAY"; if [[ ! -f /upload/upload.sh ]]; then info "Upload script missing: /upload/upload.sh";
+            exit 1; fi; while true; do info "Starting backup..."; cd /usr/src/paperless/src &&
+            /command/s6-setuidgid paperless python3 manage.py document_exporter -d -na -nt -sm
+            --no-progress-bar --skip-checks ../export; info "Documents exported"; info "Executing
+            /upload/upload.sh"; /bin/sh /upload/upload.sh /usr/src/paperless/export; info "Upload done"; info
+            "Backup created"; sleep "$DELAY"; done;',
+          ]
+        env: *paperless-env
+        envFrom:
+          - secretRef:
+              name: b2-backup
+        image: '{{ include "bjw-s.common.lib.container.image" . }}'
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        name: backup
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+          - mountPath: /usr/src/paperless/data
+            name: data
+            subPath: data
+          - mountPath: /usr/src/paperless/media
+            name: data
+            subPath: media
+          - mountPath: /usr/src/paperless/export
+            name: data
+            subPath: export
+          - mountPath: /upload
+            name: scripts

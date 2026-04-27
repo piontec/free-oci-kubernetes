@@ -55,7 +55,7 @@ Load Balancer and no other load balancers of any type.
 cd tf && tofu init && tofu apply
 
 # Bootstrap Flux
-tofu apply -target helm_release.flux_operator -var git_token="$GH_TOKEN"
+tofu apply -target null_resource.flux_operator_bootstrap -var git_token="$GH_TOKEN"
 
 # Check Flux status
 kubectl get gitrepository -A

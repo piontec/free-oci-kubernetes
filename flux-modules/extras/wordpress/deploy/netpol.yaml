@@ -1,0 +1,51 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: wordpress-egress
+  namespace: wordpress-${wp_name}
+spec:
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # WordPress → MariaDB
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: db
+      toPorts:
+        - ports:
+            - port: "3306"
+              protocol: TCP
+    # Plugin updates, external APIs, media uploads
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: wordpress-ingress
+  namespace: wordpress-${wp_name}
+spec:
+  endpointSelector: {}
+  ingress:
+    # Gateway API envoy → WordPress
+    - fromEntities:
+        - ingress
+    # Prometheus scraping
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring

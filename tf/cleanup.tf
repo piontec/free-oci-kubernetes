@@ -1,5 +1,5 @@
 resource "null_resource" "remove_kube_proxy" {
-  depends_on = [local_file.kube_config]
+  depends_on = [null_resource.kube_config]
 
   # Always run to ensure kube-proxy is removed (OCI can recreate it)
   triggers = {
@@ -51,7 +51,7 @@ resource "null_resource" "remove_kube_proxy" {
 }
 
 resource "null_resource" "remove_flannel" {
-  depends_on = [local_file.kube_config]
+  depends_on = [null_resource.kube_config]
 
   provisioner "local-exec" {
     command = <<-EOT

@@ -7,9 +7,18 @@ spec:
   install:
     remediation:
       retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
   upgrade:
     remediation:
       retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
+  timeout: 5m
+  driftDetection:
+    mode: enabled
   chart:
     spec:
       chart: alloy
@@ -25,38 +34,226 @@ spec:
       create: true
     serviceMonitor:
       enabled: true
+    controller:
+      volumes:
+        extra:
+          - name: runlogjournal
+            hostPath:
+              path: /run/log/journal
+              type: DirectoryOrCreate
+          - name: machineid
+            hostPath:
+              path: /etc/machine-id
+              type: File
     alloy:
+      mounts:
+        varlog: true
+        extra:
+          - name: runlogjournal
+            mountPath: /run/log/journal
+            readOnly: true
+          - name: machineid
+            mountPath: /etc/machine-id
+            readOnly: true
       configMap:
         content: |
           discovery.kubernetes "pods" {
             role = "pod"
-            namespaces {
-              names = []
+            selectors {
+              role  = "pod"
+              field = "spec.nodeName=" + sys.env("HOSTNAME")
+            }
+          }
+
+          discovery.relabel "pod_logs" {
+            targets = discovery.kubernetes.pods.targets
+
+            rule {
+              action        = "drop"
+              source_labels = ["__meta_kubernetes_pod_phase"]
+              regex         = "Succeeded|Failed"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_namespace"]
+              target_label  = "namespace"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_name"]
+              target_label  = "pod"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_container_name"]
+              target_label  = "container"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_node_name"]
+              target_label  = "node"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_label_app"]
+              target_label  = "app"
+              regex         = "(.+)"
+              replacement   = "$1"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+              target_label  = "app"
+              regex         = "(.+)"
+              replacement   = "$1"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_component"]
+              target_label  = "component"
+              regex         = "(.+)"
+              replacement   = "$1"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_instance"]
+              target_label  = "release"
+              regex         = "(.+)"
+              replacement   = "$1"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_controller_kind", "__meta_kubernetes_pod_controller_name"]
+              separator     = ";"
+              target_label  = "workload"
+              regex         = "ReplicaSet;(.*)-[a-f0-9]{9,10}"
+              replacement   = "$1"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_controller_kind"]
+              target_label  = "workload_type"
+              regex         = "ReplicaSet"
+              replacement   = "deployment"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_controller_kind", "__meta_kubernetes_pod_controller_name"]
+              separator     = ";"
+              target_label  = "workload"
+              regex         = "StatefulSet;(.*)"
+              replacement   = "$1"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_controller_kind"]
+              target_label  = "workload_type"
+              regex         = "StatefulSet"
+              replacement   = "statefulset"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_controller_kind", "__meta_kubernetes_pod_controller_name"]
+              separator     = ";"
+              target_label  = "workload"
+              regex         = "DaemonSet;(.*)"
+              replacement   = "$1"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_controller_kind"]
+              target_label  = "workload_type"
+              regex         = "DaemonSet"
+              replacement   = "daemonset"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_controller_kind", "__meta_kubernetes_pod_controller_name"]
+              separator     = ";"
+              target_label  = "workload"
+              regex         = "Job;(.*)"
+              replacement   = "$1"
+            }
+
+            rule {
+              source_labels = ["__meta_kubernetes_pod_controller_kind"]
+              target_label  = "workload_type"
+              regex         = "Job"
+              replacement   = "job"
+            }
+
+            rule {
+              source_labels = ["namespace", "workload"]
+              separator     = "/"
+              target_label  = "job"
+              regex         = "(.+)"
+              replacement   = "$1"
             }
           }
 
           loki.source.kubernetes "pods" {
-            targets    = discovery.kubernetes.pods.targets
+            targets    = discovery.relabel.pod_logs.output
+            forward_to = [loki.process.pod_logs.receiver]
+          }
+
+          loki.process "pod_logs" {
+            stage.static_labels {
+              values = {
+                log_source = "pod",
+              }
+            }
+
+            forward_to = [loki.write.loki.receiver]
+          }
+
+          discovery.relabel "journal_logs" {
+            targets = []
+
+            rule {
+              source_labels = ["__journal__hostname"]
+              target_label  = "node"
+            }
+
+            rule {
+              source_labels = ["__journal__systemd_unit"]
+              target_label  = "unit"
+            }
+
+            rule {
+              source_labels = ["__journal_syslog_identifier"]
+              target_label  = "syslog_identifier"
+            }
+
+            rule {
+              source_labels = ["__journal__transport"]
+              target_label  = "transport"
+            }
+
+            rule {
+              source_labels = ["__journal_priority_keyword"]
+              target_label  = "level"
+            }
+          }
+
+          loki.source.journal "node" {
+            max_age       = "24h"
+            relabel_rules = discovery.relabel.journal_logs.rules
+            forward_to    = [loki.process.node_logs.receiver]
+          }
+
+          loki.process "node_logs" {
+            stage.static_labels {
+              values = {
+                job        = "node-journal",
+                log_source = "node",
+              }
+            }
+
             forward_to = [loki.write.loki.receiver]
           }
 
           loki.write "loki" {
             endpoint {
               url = "http://loki-stack.loki:3100/loki/api/v1/push"
-            }
-          }
-
-          prometheus.exporter.unix "node" {
-            include_exporter_metrics = true
-          }
-
-          prometheus.scrape "alloy" {
-            targets = prometheus.exporter.unix.node.targets
-            forward_to = [prometheus.remote_write.metrics.receiver]
-          }
-
-          prometheus.remote_write "metrics" {
-            endpoint {
-              url = "http://kube-prometheus-stack-prometheus.monitoring:9090/api/v1/write"
             }
           }

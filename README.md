@@ -32,6 +32,7 @@ that we need to run all the applications.
 Before we start, make sure that you have installed (tested on Linux, should work on other OSes as well):
 
 - tofu - this is a fork of the well-known TerraForm project, we'll use it to bootstrap our cloud infrastructure
+- helm - used once to bootstrap the Flux Operator chart before Flux takes over managing it
 - flux - the CLI for controlling flux deployment
 - sops - a secret encryption tool that we use to securely keep all secrets in the repository
 - gpg - encryption tool that we will use as a backend for `sops`
@@ -190,7 +191,7 @@ Run `tofu` again, this time asking it to deploy the `flux-operator`
 
 ```sh
 # run from the tf/ directory
-tofu apply -target helm_release.flux_operator -var git_token="$GH_TOKEN"
+tofu apply -target null_resource.flux_operator_bootstrap -var git_token="$GH_TOKEN"
 ```
 
 Running

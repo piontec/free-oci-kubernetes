@@ -1,13 +1,13 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: mariadb-operator
+  name: mariadb-operator-crds
 spec:
   interval: 1h
   chart:
     spec:
-      chart: mariadb-operator
-      version: "0.${mariadb_operator_version}"
+      chart: mariadb-operator-crds
+      version: "${mariadb_operator_version}"
       sourceRef:
         kind: HelmRepository
         name: mariadb-operator
@@ -16,10 +16,53 @@ spec:
     crds: CreateReplace
     remediation:
       retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
   upgrade:
     crds: CreateReplace
     remediation:
       retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
+  timeout: 5m
+  driftDetection:
+    mode: enabled
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mariadb-operator
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: mariadb-operator
+      version: "${mariadb_operator_version}"
+      sourceRef:
+        kind: HelmRepository
+        name: mariadb-operator
+        namespace: db
+  dependsOn:
+    - name: mariadb-operator-crds
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
+  timeout: 5m
+  driftDetection:
+    mode: enabled
   values:
     metrics:
       enabled: true

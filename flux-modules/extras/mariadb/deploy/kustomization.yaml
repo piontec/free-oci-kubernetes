@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: db
 resources:
   - namespace.yaml
+  - netpol.yaml
   - mariadb-operator-helmrepo.yaml
   - mariadb-operator-helmrelease.yaml
   - mariadb/

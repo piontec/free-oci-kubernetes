@@ -1,0 +1,31 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+spec:
+  distribution:
+    version: "2.x"
+    registry: "ghcr.io/fluxcd"
+    artifact: "oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests"
+  components:
+    - source-controller
+    - kustomize-controller
+    - helm-controller
+    - notification-controller
+    - image-reflector-controller
+    - image-automation-controller
+  cluster:
+    type: kubernetes
+    multitenant: false
+    networkPolicy: true
+    domain: "cluster.local"
+    tenantDefaultServiceAccount: default
+  sync:
+    kind: GitRepository
+    url: "ssh://git@github.com/YOUR_USER/YOUR_REPO"
+    ref: "refs/heads/main"
+    path: "flux/"
+    pullSecret: "flux-system"
+    interval: 1m
+  wait: true

@@ -14,10 +14,18 @@ spec:
         app.kubernetes.io/instance: tika
         app.kubernetes.io/name: tika
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: tika
-          image: docker.io/apache/tika:latest
+          image: docker.io/apache/tika:3.1.0.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
           ports:
             - containerPort: 9998
               name: http
@@ -56,10 +64,19 @@ spec:
         app.kubernetes.io/instance: gotenberg
         app.kubernetes.io/name: gotenberg
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: gotenberg
           image: docker.io/gotenberg/gotenberg:7.10
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            # Note: not dropping ALL caps - Chromium needs some capabilities for PDF rendering
           command:
             - gotenberg
             - "--chromium-disable-javascript=true"

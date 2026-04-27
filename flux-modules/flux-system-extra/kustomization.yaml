@@ -5,5 +5,4 @@ resources:
   - flux-notifications.yaml
   - github-commit-notification.yaml
   - slack-flux-notification-url-secret.yaml
-  - github-api-token-secret.yaml
   - monitoring/kustomization-monitoring-flux.yaml

@@ -1,0 +1,66 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: monitoring-egress
+  namespace: monitoring
+spec:
+  endpointSelector: {}
+  egress:
+    # Prometheus scrapes pods across all namespaces directly
+    - toEntities:
+        - cluster
+    # metrics-server needs kubelet access on each node
+    - toEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "10250"
+              protocol: TCP
+    # Alloy k8s discovery, Prometheus operator, metrics-server API aggregation
+    - toEntities:
+        - kube-apiserver
+    # External: Grafana datasources, plugin downloads, alerting webhooks
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: monitoring-ingress
+  namespace: monitoring
+spec:
+  endpointSelector: {}
+  ingress:
+    # Gateway API envoy proxy → Grafana UI
+    - fromEntities:
+        - ingress
+    # Intra-namespace: Prometheus → Alertmanager, Grafana, etc.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+    # kube-apiserver → metrics-server (API aggregation) + admission webhooks
+    # 'kube-apiserver' entity matches k8sServiceHost (public IP 138.2.132.205)
+    - fromEntities:
+        - kube-apiserver
+    # OKE: kube-apiserver uses its private VCN IP (10.0.0.x) for in-cluster calls
+    # such as admission webhooks and API aggregation. Cilium classifies this as
+    # 'world' (not 'kube-apiserver') since k8sServiceHost is the public IP.
+    - fromCIDR:
+        - "10.0.0.0/24"

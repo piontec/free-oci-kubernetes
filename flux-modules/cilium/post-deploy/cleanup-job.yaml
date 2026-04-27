@@ -32,7 +32,7 @@ rules:
   # in any namespace where this role is bound.
   - apiGroups: ["apps"]
     resources: ["daemonsets"]
-    resourceNames: ["kube-flannel-ds"]
+    resourceNames: ["kube-flannel-ds", "kube-proxy"]
     verbs: ["get", "delete"]
 ---
 apiVersion: v1
@@ -58,7 +58,9 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: restart-pods-after-cilium-ready
+  namespace: kube-system
 spec:
+  ttlSecondsAfterFinished: 600
   completions: 1
   parallelism: 1
   template:
@@ -67,7 +69,8 @@ spec:
       restartPolicy: Never # required for the feature
       containers:
         - name: sh
-          image: bitnami/kubectl:latest
+          image: docker.io/bitnami/kubectl@sha256:e3753513d7e4eb98777db09886810710c24f58bdee0dd30e41d3a2aa728c343e
+          imagePullPolicy: IfNotPresent
           command: # The jobs fails as there is at least one failed index
             # (all even indexes fail in here), yet all indexes
             # are executed as maxFailedIndexes is not exceeded.
@@ -81,9 +84,9 @@ spec:
               	exit 1
               fi
 
-              # get cilium status
-              function all_ceps { kubectl get cep --all-namespaces -o json | jq -r '.items[].metadata | .namespace + "/" + .name'; }
-              function all_pods { kubectl get pods --all-namespaces -o json | jq -r '.items[] | select((.status.phase=="Running" or .status.phase=="Pending") and (.spec.hostNetwork==true | not)) | .metadata | .namespace + "/" + .name'; }
+              # Build comparable namespace/name lists without relying on extra tools in the image.
+              function all_ceps { kubectl get cep --all-namespaces -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}{"\n"}{end}'; }
+              function all_pods { kubectl get pods --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,NAME:.metadata.name,PHASE:.status.phase,HOSTNETWORK:.spec.hostNetwork | awk '($3=="Running" || $3=="Pending") && $4 != "true" { print $1 "/" $2 }'; }
               pods_to_restart=$(sort <(all_ceps) <(all_pods) | uniq -u)
 
               if [[ $pods_to_restart != "" ]]; then
@@ -99,6 +102,8 @@ spec:
               	if kubectl -n kube-system get ds kube-flannel-ds >/dev/null; then
               		echo "Deleting flannel deamon set"
               		kubectl -n kube-system delete ds kube-flannel-ds
+              		echo "Deleting kube-proxy deamon set"
+              		kubectl -n kube-system delete ds kube-proxy
               	fi
               fi
               echo "All done"

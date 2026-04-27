@@ -8,9 +8,18 @@ spec:
   install:
     remediation:
       retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
   upgrade:
     remediation:
       retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
+  timeout: 5m
+  driftDetection:
+    mode: enabled
   chart:
     spec:
       chart: external-dns

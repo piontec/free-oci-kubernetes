@@ -6,7 +6,6 @@ spec:
   envFrom:
     - configMapRef:
         name: mariadb-config
-  image: mariadb:11.4.2
   metrics:
     enabled: true
     passwordSecretKeyRef:
@@ -15,6 +14,12 @@ spec:
     username: mariadb-metrics
     exporter:
       image: docker.io/prom/mysqld-exporter:v0.15.1
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        runAsUser: 65534
+        capabilities:
+          drop: ["ALL"]
   myCnf: |
     [mysqld]
     bind-address=0.0.0.0
@@ -31,8 +36,20 @@ spec:
   rootPasswordSecretKeyRef:
     key: root-password
     name: mariadb-password
+  updateStrategy:
+    autoUpdateDataPlane: true
+  podSecurityContext:
+    runAsUser: 999
+    runAsGroup: 999
+    runAsNonRoot: true
+    fsGroup: 999
+    seccompProfile:
+      type: RuntimeDefault
   securityContext:
     allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    capabilities:
+      drop: ["ALL"]
   serviceAccountName: mariadb
   storage:
     size: 10Gi

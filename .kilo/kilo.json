@@ -1,0 +1,15 @@
+{
+  "$schema": "https://kilo.ai/config.json",
+  "mcp": {
+    "kubernetes": {
+      "type": "local",
+      "command": ["mcp-kubernetes", "serve"],
+      "enabled": true
+    },
+    "flux-operator-mcp": {
+      "type": "local",
+      "command": ["flux-operator-mcp", "serve"],
+      "enabled": true
+    }
+  }
+}

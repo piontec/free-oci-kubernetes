@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: db
+  name: wordpress-${wp_name}
   labels:
     pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/enforce-version: latest
@@ -9,3 +9,6 @@ metadata:
     pod-security.kubernetes.io/warn-version: latest
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/audit-version: latest
+    # Used by CiliumNetworkPolicy to identify wordpress namespaces (Cilium propagates
+    # namespace labels to endpoint identities, enabling cross-namespace netpol selectors)
+    app.kubernetes.io/part-of: wordpress

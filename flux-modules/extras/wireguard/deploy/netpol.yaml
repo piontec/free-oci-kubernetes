@@ -1,0 +1,44 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: wireguard-egress
+  namespace: wireguard
+spec:
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # WireGuard VPN routes traffic to all cluster pods
+    - toEntities:
+        - cluster
+    # WireGuard VPN routes internet traffic for VPN clients
+    - toEntities:
+        - world
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: wireguard-ingress
+  namespace: wireguard
+spec:
+  endpointSelector: {}
+  ingress:
+    # WireGuard VPN UDP port (mapped from NodePort 30111 → container 51820)
+    - fromEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "51820"
+              protocol: UDP
+    # Prometheus scraping
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring

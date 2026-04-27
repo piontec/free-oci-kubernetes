@@ -27,23 +27,76 @@ resource "oci_containerengine_cluster" "k8s_cluster" {
 }
 
 data "oci_containerengine_cluster_kube_config" "k8s_cluster_kube_config" {
-    #Required
-    cluster_id = oci_containerengine_cluster.k8s_cluster.id
+  #Required
+  cluster_id = oci_containerengine_cluster.k8s_cluster.id
 }
 
-resource "local_file" "kube_config" {
-    depends_on = [oci_containerengine_node_pool.k8s_node_pool]
-    content  = data.oci_containerengine_cluster_kube_config.k8s_cluster_kube_config.content
-    filename = ".kube.config"
-    file_permission = 0400
+removed {
+  from = local_file.kube_config
+
+  lifecycle {
+    destroy = false
+  }
 }
 
-resource "local_file" "cilium_release" {
-  content  = templatefile("cilium-release.yaml.tftpl", {
+resource "null_resource" "kube_config" {
+  depends_on = [oci_containerengine_node_pool.k8s_node_pool]
+
+  triggers = {
+    content_sha = sha256(data.oci_containerengine_cluster_kube_config.k8s_cluster_kube_config.content)
+  }
+
+  provisioner "local-exec" {
+    working_dir = path.module
+    command     = <<-EOT
+      set -eu
+
+      if [ -e .kube.config ]; then
+        echo ".kube.config already exists, leaving it unchanged"
+        exit 0
+      fi
+
+      cat > .kube.config <<'EOF'
+${data.oci_containerengine_cluster_kube_config.k8s_cluster_kube_config.content}
+EOF
+      chmod 0400 .kube.config
+    EOT
+  }
+}
+
+removed {
+  from = local_file.cilium_release
+
+  lifecycle {
+    destroy = false
+  }
+}
+
+resource "null_resource" "cilium_release" {
+  triggers = {
+    content_sha = sha256(templatefile("cilium-release.yaml.tftpl", {
+      k8s_api_ip = split(":", oci_containerengine_cluster.k8s_cluster.endpoints[0].public_endpoint)[0]
+    }))
+  }
+
+  provisioner "local-exec" {
+    working_dir = path.module
+    command = <<-EOT
+      set -eu
+
+      if [ -e ../flux-modules/cilium/deploy/release.yaml ]; then
+        echo "../flux-modules/cilium/deploy/release.yaml already exists, leaving it unchanged"
+        exit 0
+      fi
+
+      cat > ../flux-modules/cilium/deploy/release.yaml <<'EOF'
+${templatefile("cilium-release.yaml.tftpl", {
     k8s_api_ip = split(":", oci_containerengine_cluster.k8s_cluster.endpoints[0].public_endpoint)[0]
-  })
-  filename        = "../flux-modules/cilium/deploy/release.yaml"
-  file_permission = "0640"
+})}
+EOF
+      chmod 0640 ../flux-modules/cilium/deploy/release.yaml
+    EOT
+}
 }
 
 resource "oci_containerengine_node_pool" "k8s_node_pool" {
@@ -107,7 +160,7 @@ resource "oci_identity_dynamic_group" "k8s_instances" {
 }
 
 resource "oci_identity_policy" "k8s_instance_policy" {
-  depends_on = [oci_identity_dynamic_group.k8s_instances]
+  depends_on     = [oci_identity_dynamic_group.k8s_instances]
   compartment_id = var.compartment_id
   description    = "allow k8s instances to mount disks"
   name           = "k8s_allow_disks"

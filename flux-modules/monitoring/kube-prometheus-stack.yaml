@@ -16,10 +16,19 @@ spec:
     crds: CreateReplace
     remediation:
       retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
   upgrade:
     crds: CreateReplace
     remediation:
       retries: 3
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 2m
+  timeout: 10m
+  driftDetection:
+    mode: enabled
   valuesFrom:
     - kind: Secret
       name: prom-stack-grafana-pass
@@ -136,6 +145,23 @@ spec:
             defaultRegion: "${oci_region}"
             environment: "OCI Instance"
             profile0: "DEFAULT"
+        - name: "Loki"
+          uid: "loki"
+          type: "loki"
+          access: proxy
+          url: "http://loki-stack.loki:3100"
+          isDefault: false
+          jsonData:
+            timeout: 60
+            maxLines: 1000
+        - name: "Alertmanager"
+          uid: "alertmanager"
+          type: "alertmanager"
+          access: proxy
+          url: "http://kube-prometheus-stack-alertmanager.monitoring:9093"
+          jsonData:
+            implementation: "prometheus"
+            handleGrafanaManagedAlerts: false
       ingress:
         enabled: false
     prometheus-node-exporter:

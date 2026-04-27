@@ -29,12 +29,14 @@ spec:
   eventSeverity: info
   eventSources:
     - kind: GitRepository
-      name: '*'
+      name: "*"
     - kind: Kustomization
-      name: '*'
+      name: "*"
     - kind: HelmRepository
-      name: '*'
+      name: "*"
     - kind: HelmRelease
-      name: '*'
+      name: "*"
   exclusionList:
     - "^Dependencies.*"
+    - "^GitRepository.* configured$"
+    - "^Job/kube-system/restart-pods-after-cilium-ready created$"
