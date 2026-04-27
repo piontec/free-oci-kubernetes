@@ -1,14 +1,15 @@
 # Free OCI Kubernetes Cluster with GitOps
 
-By applying this repository you will get a completely free (still, as of Q1 2025, using the free tier of Oracle Cloud) Kubernetes cluster that has important applications already
-pre-installed and is fully GitOps drive using Flux CD.
+By applying this repository you will get a completely free (still, as of Q1 2026, using the free tier of Oracle Cloud) Kubernetes cluster that has important applications already
+pre-installed and is fully GitOps driven using Flux CD.
 
 In more details, by following this guide you'll get:
 
 - a completely free Kubernetes cluster, with 2 nodes, each wit 4 core ARM CPU, 12 GBs of RAM and 50 GB of storage (using the Oracle Cloud Infrastructure)
 - a fully GitOps driven Kubernetes cluster using Flux CD, including
-  - nginx-ingress-controller
-  - cert-manager
+  - Cilium CNI running in kube-proxy-less mode, with Gateway API (HTTPRoutes) for service exposure
+  - cert-manager with automatic TLS certificates from Let's Encrypt via Gateway API integration
+  - external-dns for automatic Cloudflare DNS record management (optional, requires Cloudflare API token)
   - monitoring setup, including Prometheus, Loki and Grafana
   - personal notifications about the alerts and health of your cluster
   - optional extra features, like a wireguard VPN server exposing your cluster deployments
@@ -158,10 +159,19 @@ For each such file (see list below), you have to repeat the same procedure:
 
 You need to process the following files with secrets:
 
-- ./flux-modules/flux-system-extra/github-api-token-secret.yaml.tpl.enc - paste your GitHub PAT again, so Flux can report back the status fo your commits
+- ./flux-modules/flux-system-extra/github-api-token-secret.yaml.tpl.enc - paste your GitHub PAT again, so Flux can report back the status of your commits
 - ./flux-modules/flux-system-extra/slack-flux-notification-url-secret.yaml.tpl.enc - enter here the Slack webhook you created earlier
 - ./flux-modules/monitoring/alertmanager-slack-api-secret.yaml.tpl.enc - again, include the Slack webhook URL
 - ./flux-modules/monitoring/prom-stack-grafana-pass-secret.yaml.tpl.enc - create a user password for the Grafana web UI
+
+**Optional:** If you want to enable `external-dns` for automatic DNS record management via Cloudflare:
+
+1. Copy `flux-modules/kube-system/external-dns-secret.yaml.tmpl` to `flux-modules/kube-system/external-dns-secret.yaml`
+2. Fill in your Cloudflare API token as the base64-encoded value of `apiKey`
+3. Encrypt the file: `sops -i -e flux-modules/kube-system/external-dns-secret.yaml`
+4. Uncomment `external-dns-secret.yaml` in `flux-modules/kube-system/kustomization.yaml`
+5. Edit `domainFilters` in `flux-modules/kube-system/external-dns-helmrelease.yaml` to set your domain
+6. Add the annotation `external-dns: "enabled"` to any `HTTPRoute` you want DNS records created for
 
 Additionally, you have to edit `postBuild` section of a few files to give information like your DNS name for hosting the cluster or admin's email address (required for
 `letsencrypt`). The files you need to edit are:
