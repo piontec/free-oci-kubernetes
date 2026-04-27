@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -L \"sourceRef\\\\|chartRef\" /home/piontec/devel/piontec-github/oci-test/flux-modules/**/kustomization*.yaml)",
+      "Bash(ls:*)"
+    ]
+  }
+}

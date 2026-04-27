@@ -4,6 +4,12 @@ metadata:
   name: wordpress-${wp_name}
 spec:
   interval: 1h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
   chartRef:
     kind: OCIRepository
     name: bitnami-wordpress

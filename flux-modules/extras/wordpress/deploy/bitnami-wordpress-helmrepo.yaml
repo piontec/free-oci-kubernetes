@@ -10,3 +10,6 @@ spec:
   url: oci://registry-1.docker.io/bitnamicharts/wordpress
   ref:
     semver: "*"
+  # Note: Bitnami uses Notation signing on Docker Hub (not Cosign).
+  # Flux OCIRepository verify.provider: notation requires a trust policy and certificate bundle
+  # to be configured — add once a trust store Secret is in place.

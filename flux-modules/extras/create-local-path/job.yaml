@@ -4,9 +4,9 @@ metadata:
   name: create-local-path-${create_dir_proj_name}
   namespace: kube-system
 spec:
+  backoffLimit: 1
   template:
     spec:
-      backoffLimit: 1
       restartPolicy: Never
       containers:
         - name: create-dir

@@ -14,8 +14,12 @@ spec:
         name: prometheus-community
   install:
     crds: CreateReplace
+    remediation:
+      retries: 3
   upgrade:
     crds: CreateReplace
+    remediation:
+      retries: 3
   valuesFrom:
     - kind: Secret
       name: prom-stack-grafana-pass

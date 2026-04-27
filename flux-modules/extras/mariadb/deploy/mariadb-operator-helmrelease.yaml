@@ -7,15 +7,19 @@ spec:
   chart:
     spec:
       chart: mariadb-operator
-      version: "0.29.*"
+      version: "0.${mariadb_operator_version}"
       sourceRef:
         kind: HelmRepository
         name: mariadb-operator
         namespace: db
   install:
     crds: CreateReplace
+    remediation:
+      retries: 3
   upgrade:
     crds: CreateReplace
+    remediation:
+      retries: 3
   values:
     metrics:
       enabled: true

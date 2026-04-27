@@ -4,6 +4,12 @@ metadata:
   name: paperless-ngx
 spec:
   interval: 1h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
   chart:
     spec:
       chart: paperless-ngx
