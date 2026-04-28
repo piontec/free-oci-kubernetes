@@ -60,13 +60,9 @@ spec:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: monitoring
     # mariadb-operator webhook from kube-apiserver
-    # 'kube-apiserver' entity matches public IP; fromCIDR covers private VCN IP (10.0.0.150).
-    # remote-node is required because kube-apiserver traffic may arrive at a different worker node
-    # and be forwarded via Cilium overlay — the source IP then becomes the remote node's overlay IP
-    # (e.g. 10.244.0.115), which matches neither kube-apiserver nor the VCN CIDR.
+    # 'kube-apiserver' entity matches public IP; fromCIDR covers private VCN IP
     - fromEntities:
         - kube-apiserver
-        - remote-node
     # Intra-namespace: mariadb-operator ↔ database pods
     - fromEndpoints:
         - matchLabels:

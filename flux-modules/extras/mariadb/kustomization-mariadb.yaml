@@ -19,4 +19,4 @@ spec:
       name: sops-gpg
   postBuild:
     substitute:
-      mariadb_operator_version: "25.10.*"
+      mariadb_operator_version: "26.3.*"
