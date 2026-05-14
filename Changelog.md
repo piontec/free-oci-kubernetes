@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 2026.05.14
+
+### Added
+
+- Vaultwarden available as an application
+
+### Changed
+
+- Security hardening: add PSS policies to all namespaces, added cilium network policies to all namespaces
+- MariaDB operator updates
+
 ## 2026.04.20_2
 
 ### Changed
