@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 2026.06.26
+
+### Changed
+
+- Upgrade to k8s 1.36.0
+
 ## 2026.05.14
 
 ### Added
