@@ -27,6 +27,19 @@ rules:
     resources: ["pods"]
     verbs: ["delete"]
 
+  # Permission to read cilium-operator logs, to detect an operator that started before the
+  # Gateway API CRDs were present (its Gateway API controller stays disabled for its lifetime)
+  - apiGroups: [""] # Core API group
+    resources: ["pods/log"]
+    verbs: ["get"]
+
+  # Permission to check whether the Gateway API CRDs are installed at all, so the operator
+  # check above stays a no-op on clusters that don't use Gateway API
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    resourceNames: ["gateways.gateway.networking.k8s.io"]
+    verbs: ["get"]
+
   # Permission to delete the DaemonSet named 'kube-flannel-ds'
   # Similar to the 'cilium' DaemonSet, resourceNames applies to 'kube-flannel-ds'
   # in any namespace where this role is bound.
@@ -105,5 +118,24 @@ spec:
               		echo "Deleting kube-proxy deamon set"
               		kubectl -n kube-system delete ds kube-proxy
               	fi
+              fi
+
+              # Cilium probes the Gateway API CRDs only at startup: an operator that started
+              # before they existed (or before they gained a required version) keeps its Gateway
+              # API controller - and with it Gateway TLS secret-sync - disabled for its whole
+              # life, which silently breaks HTTPS on every Gateway listener. Restart any operator
+              # that says so. Guarded on the CRDs being installed now, so removing the
+              # gateway-api-crds module can't turn this into an hourly restart loop.
+              # ponytail: matches the operator's own log line; if cilium rewords it this check
+              # goes quiet (no false restarts, just no auto-heal) - re-grep a fresh operator log.
+              if kubectl get crd gateways.gateway.networking.k8s.io >/dev/null 2>&1; then
+              	for p in $(kubectl -n kube-system get pod -l io.cilium/app=operator -o name); do
+              		if kubectl -n kube-system logs "$p" | grep -q "Required GatewayAPI resources are not found"; then
+              			echo "Operator $p started without the Gateway API CRDs; deleting it so it restarts with them"
+              			# Delete the pod, not 'rollout restart': operator anti-affinity is
+              			# requiredDuringScheduling with 2 replicas on 2 nodes, so a surge rollout deadlocks.
+              			kubectl -n kube-system delete "$p"
+              		fi
+              	done
               fi
               echo "All done"

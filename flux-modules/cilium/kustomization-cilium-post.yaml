@@ -5,6 +5,9 @@ metadata:
   namespace: flux-system
 spec:
   interval: 1h
+  # The hook Job's spec.template is immutable, so script changes must recreate it
+  # instead of failing the apply and wedging this Kustomization.
+  force: true
   path: ./flux-modules/cilium/post-deploy
   prune: true
   dependsOn:

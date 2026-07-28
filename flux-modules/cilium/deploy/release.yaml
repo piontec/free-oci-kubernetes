@@ -1,0 +1,53 @@
+# AUTO-GENERATED from Terraform. Do not edit manually.
+#
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cilium
+spec:
+  interval: 5m
+  chart:
+    spec:
+      version: "1.x.x"
+      chart: cilium
+      sourceRef:
+        kind: HelmRepository
+        name: cilium
+      interval: 120m
+  values:
+    gatewayAPI:
+      enabled: true
+    kubeProxyReplacement: true
+    kubeProxyReplacementHealthzBindAddr: "0.0.0.0:10256"
+    k8sServiceHost: "138.2.132.205"
+    k8sServicePort: "6443"
+    hostServices:
+      enabled: true
+    nodePort:
+      enabled: true
+    externalIPs:
+      enabled: true
+    bpf:
+      masquerade: true
+    hubble:
+      enabled: true
+      # tls.auto.method=helm never re-issues certs: the chart's server-secret
+      # template looks up the existing secret and reuses tls.crt/tls.key
+      # unconditionally, with no expiry check, so the 365d hubble server cert
+      # silently expires. certgen re-issues all hubble certs on every run.
+      tls:
+        auto:
+          method: cronJob
+          schedule: "0 0 1 */4 *"
+      metrics:
+        dashboards:
+          enabled: true
+          namespace: kube-system
+      relay:
+        enabled: true
+      ui:
+        enabled: true
+    ipam:
+      mode: "kubernetes"
+    #clustermesh:
+    #  useAPIServer: true

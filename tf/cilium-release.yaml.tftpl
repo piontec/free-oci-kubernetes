@@ -31,6 +31,14 @@ spec:
       masquerade: true
     hubble:
       enabled: true
+      # tls.auto.method=helm never re-issues certs: the chart's server-secret
+      # template looks up the existing secret and reuses tls.crt/tls.key
+      # unconditionally, with no expiry check, so the 365d hubble server cert
+      # silently expires. certgen re-issues all hubble certs on every run.
+      tls:
+        auto:
+          method: cronJob
+          schedule: "0 0 1 */4 *"
       metrics:
         dashboards:
           enabled: true
