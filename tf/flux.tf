@@ -1,107 +1,57 @@
-// Create a Kubernetes secret with the Git credentials
-// if a Git token is provided.
-resource "kubernetes_secret_v1" "git_auth" {
-  count      = var.git_token != "" ? 1 : 0
+// Bootstrap the Flux Operator using the controlplaneio-fluxcd bootstrap module.
+//
+// An ephemeral in-cluster Job installs the Flux Operator (Helm) and applies the
+// FluxInstance with create-if-missing semantics, then hands ownership over to
+// Flux. The FluxInstance manifest is read straight from the GitOps tree
+// (single source of truth); after bootstrap, Flux reconciles the same file from
+// the "flux/" sync path and adopts the operator HelmRelease + FluxInstance.
+module "flux_operator_bootstrap" {
+  source  = "controlplaneio-fluxcd/flux-operator-bootstrap/kubernetes"
+  version = "0.7.0"
 
-  metadata {
-    name      = "flux-system"
-    namespace = "flux-system"
+  // Wait for .kube.config to be written before the helm/kubernetes providers
+  // try to reach the cluster.
+  depends_on = [null_resource.kube_config]
+
+  // Bump to force the bootstrap Job to re-run.
+  revision = 1
+
+  gitops_resources = {
+    instance_yaml = file("${path.module}/../flux/flux-system/flux-instance.yaml")
   }
 
-  data = {
-    username = "git"
-    password = var.git_token
+  // Git credentials secret (username/password) consumed by the FluxInstance
+  // sync via pullSecret: flux-system. Never stored in Terraform state - the
+  // module only keeps a SHA-256 hash. Skipped when no token is provided.
+  managed_resources = {
+    secrets_yaml = var.git_token == "" ? "" : <<-YAML
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: flux-system
+        namespace: flux-system
+      type: Opaque
+      stringData:
+        username: git
+        password: '${replace(var.git_token, "'", "''")}'
+    YAML
   }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes  = [data]
-  }
-
-  type = "Opaque"
 }
 
-// Install the Flux Operator.
+// State migration: detach the resources from the previous bootstrap mechanism
+// WITHOUT deleting them from the live cluster. The module re-adopts them.
 removed {
-  from = helm_release.flux_operator
+  from = kubernetes_manifest.flux_instance
 
   lifecycle {
     destroy = false
   }
 }
 
-resource "null_resource" "flux_operator_bootstrap" {
-  triggers = {
-    name       = "flux-operator"
-    namespace  = "flux-system"
-    repository = "oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator"
-  }
+removed {
+  from = kubernetes_secret_v1.git_auth
 
-  provisioner "local-exec" {
-    working_dir = path.module
-    command     = <<-EOT
-      set -eu
-
-      if ! command -v helm >/dev/null 2>&1; then
-        echo "helm CLI is required to bootstrap flux-operator" >&2
-        exit 1
-      fi
-
-      if helm status flux-operator -n flux-system >/dev/null 2>&1; then
-        echo "flux-operator already exists, leaving it unchanged"
-        exit 0
-      fi
-
-      helm upgrade --install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator \
-        --namespace flux-system \
-        --create-namespace \
-        --wait \
-        --timeout 5m
-    EOT
-  }
-}
-
-// Configure the Flux instance.
-resource "kubernetes_manifest" "flux_instance" {
-  depends_on = [null_resource.flux_operator_bootstrap]
-
-  manifest = {
-    "apiVersion"= "fluxcd.controlplane.io/v1"
-    "kind" = "FluxInstance"
-    "metadata" = {
-      "name" = "flux"
-      "namespace" = "flux-system"
-    }
-    "spec" = {
-      "cluster" = {
-        "domain" = "cluster.local"
-        "multitenant" = "false"
-        "networkPolicy" = "true"
-        "type" = "kubernetes"
-        "tenantDefaultServiceAccount" = "default"
-      }
-      "components" = [
-        "source-controller",
-        "kustomize-controller",
-        "helm-controller",
-        "notification-controller",
-        "image-reflector-controller",
-        "image-automation-controller"
-      ]
-      "distribution" = {
-        "artifact" = "oci://ghcr.io/controlplaneio-fluxcd/flux-operator-manifests"
-        "registry" = var.flux_registry
-        "version" = var.flux_version
-      }
-      "sync" = {
-        "interval" = "1m"
-        "kind" = "GitRepository"
-        "path" = var.git_path
-        "pullSecret" = "flux-system"
-        "ref" = var.git_ref
-        "url" = var.git_url
-      }
-      "wait" = "true"
-    }
+  lifecycle {
+    destroy = false
   }
 }

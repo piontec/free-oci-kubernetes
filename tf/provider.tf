@@ -1,8 +1,10 @@
 provider "oci" {
-  region              = var.region
+  region = var.region
 }
 
 terraform {
+  required_version = ">= 1.11.0"
+
   required_providers {
     oci = {
       source  = "oracle/oci"
@@ -10,7 +12,11 @@ terraform {
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = ">= 2.27"
+      version = ">= 3.0"
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 3.0"
     }
     null = {
       source  = "hashicorp/null"
@@ -21,4 +27,10 @@ terraform {
 
 provider "kubernetes" {
   config_path = ".kube.config"
+}
+
+provider "helm" {
+  kubernetes = {
+    config_path = ".kube.config"
+  }
 }

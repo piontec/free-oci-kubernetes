@@ -31,8 +31,7 @@ that we need to run all the applications.
 
 Before we start, make sure that you have installed (tested on Linux, should work on other OSes as well):
 
-- tofu - this is a fork of the well-known TerraForm project, we'll use it to bootstrap our cloud infrastructure
-- helm - used once to bootstrap the Flux Operator chart before Flux takes over managing it
+- tofu (>= 1.11) - this is a fork of the well-known TerraForm project, we'll use it to bootstrap our cloud infrastructure
 - flux - the CLI for controlling flux deployment
 - sops - a secret encryption tool that we use to securely keep all secrets in the repository
 - gpg - encryption tool that we will use as a backend for `sops`
@@ -73,8 +72,9 @@ Copy the template settings file `cp variables-private.tf.tpl variables-private.t
 - enter 'bastion allowed IPs', these are the IP addresses allowed to connect to the bastion host created for the cluster nodes
 - enter your default `compartment ID` - [here's how to find it](https://docs.oracle.com/en-us/iaas/Content/GSG/Tasks/contactingsupport_topic-Locating_Oracle_Cloud_Infrastructure_IDs.htm)
 - enter your region and 2 Availability Domains within it
-- enter the `git_url` value that points to your repository
 - don't enter `git_token`, as we want this value to be secret (don't save it on your hard drive).
+
+Also set the URL of your repository as the `spec.sync.url` field in `flux/flux-system/flux-instance.yaml` - this is the single source of truth Flux (and the bootstrap) use to know where to sync from.
 
 Now, go to [github.com profile page](https://github.com/settings/profile) and generate a fine-grained private access token (PAT) with `repo` scope (Read and Write access to code). Here are [more details](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens). Copy the token and paste it into the `variables-private.tf` file as the `git_token` value.
 
@@ -88,7 +88,7 @@ It's time to run `tofu` to bootstrap our cluster and obtain a `kube.config` file
 
 ```sh
 tofu init
-tofu apply -var git_token="$GH_TOKEN" -target local_file.kube_config
+tofu apply -var git_token="$GH_TOKEN" -target null_resource.kube_config
 ```
 
 Your `kube.config` should be ready. You can test it with:
@@ -185,13 +185,13 @@ Additionally, you have to edit `postBuild` section of a few files to give inform
 
 #### 4.4. Bootstrap Flux
 
-Stat by reading the [official documentation about bootstrapping Flux with Flux Operator](https://fluxcd.control-plane.io/operator/).
+Start by reading the [official documentation about bootstrapping Flux with Flux Operator](https://fluxcd.control-plane.io/operator/).
 
-Run `tofu` again, this time asking it to deploy the `flux-operator`
+Flux is bootstrapped by the [`flux-operator-bootstrap` module](https://github.com/controlplaneio-fluxcd/terraform-kubernetes-flux-operator-bootstrap), which runs an ephemeral in-cluster Job that installs the Flux Operator and applies the `FluxInstance`, then hands ownership over to Flux. A single `tofu apply` does everything - no separate targeted step is needed:
 
 ```sh
 # run from the tf/ directory
-tofu apply -target null_resource.flux_operator_bootstrap -var git_token="$GH_TOKEN"
+tofu apply -var git_token="$GH_TOKEN"
 ```
 
 Running
@@ -200,13 +200,13 @@ Running
 kubectl -n flux-system get deploy
 ```
 
-should show you that the `flux-operator` deployment is up and running (`Ready: 1/1`).
-
-Now, we can create an actual Flux instance that will deploy all the applications we have in our GitOps repository. We can do full `tofu apply` now to make sure our full `tofu` config is deployed:
+should show you that the `flux-operator` deployment is up and running (`Ready: 1/1`), and
 
 ```sh
-tofu apply -var git_token="$GH_TOKEN"
+kubectl -n flux-system get fluxinstance
 ```
+
+should show the `flux` instance becoming `Ready`. Flux will then deploy all the applications from your GitOps repository.
 
 Make sure that the `tofu` run is complete. Now, you can commit everything into your GitOps repository and push the changes, adding all the created terraform and \*.yaml
 files to your repo. Check that all the files are in, especially `tofu` state files:

@@ -29,9 +29,3 @@ variable "git_token" {
   type        = string
   default     = null
 }
-variable "git_url" {
-  description = "Git repository URL"
-  default     = "https://github.com/OWNER/REPO"
-  type        = string
-  nullable    = false
-}
