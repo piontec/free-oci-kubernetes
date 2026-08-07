@@ -1,11 +1,18 @@
 # Free OCI Kubernetes Cluster with GitOps
 
-By applying this repository you will get a completely free (still, as of Q1 2026, using the free tier of Oracle Cloud) Kubernetes cluster that has important applications already
-pre-installed and is fully GitOps driven using Flux CD.
+> [!WARNING]
+> At the beginning of 06.2026, Oracle Cloud has decreased [the free Ampere A1 Compute] resources by
+> half: it's now 2 Cores and 12 GB of RAM. It seems that older accounts still get the old qouta, but that can
+> change as well. Be sure to adjust your resources accordingly, if you want to stay "100% free".
+
+By applying this repository you will get a completely free (still, as of Q1 2026, using the free tier of
+Oracle Cloud) Kubernetes cluster that has important applications already pre-installed and is fully GitOps
+driven using Flux CD.
 
 In more details, by following this guide you'll get:
 
-- a completely free Kubernetes cluster, with 2 nodes, each wit 4 core ARM CPU, 12 GBs of RAM and 50 GB of storage (using the Oracle Cloud Infrastructure)
+- a completely free Kubernetes cluster, with 2 nodes, each wit 4 core ARM CPU, 12 GBs of RAM and 50 GB of
+  storage (using the Oracle Cloud Infrastructure)
 - a fully GitOps driven Kubernetes cluster using Flux CD, including
   - Cilium CNI running in kube-proxy-less mode, with Gateway API (HTTPRoutes) for service exposure
   - cert-manager with automatic TLS certificates from Let's Encrypt via Gateway API integration
@@ -24,35 +31,39 @@ In more details, by following this guide you'll get:
 
 ### Intro
 
-Before we can start creating the cluster, we need to first bootstrap our cloud infrastructure, our security keys and other secrets
-that we need to run all the applications.
+Before we can start creating the cluster, we need to first bootstrap our cloud infrastructure, our security
+keys and other secrets that we need to run all the applications.
 
 ### 1. Tools you need to have installed
 
 Before we start, make sure that you have installed (tested on Linux, should work on other OSes as well):
 
-- tofu (>= 1.11) - this is a fork of the well-known TerraForm project, we'll use it to bootstrap our cloud infrastructure
+- tofu (>= 1.11) - this is a fork of the well-known TerraForm project, we'll use it to bootstrap our cloud
+  infrastructure
 - flux - the CLI for controlling flux deployment
 - sops - a secret encryption tool that we use to securely keep all secrets in the repository
 - gpg - encryption tool that we will use as a backend for `sops`
-- [oci oracle cloud cli](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm) - a CLI tool to control infrastructure in the OCI
+- [oci oracle cloud cli](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm) - a CLI tool
+  to control infrastructure in the OCI
 
 ### 2. Preparing your repository
 
-Your cluster will be driven form your own repository, that has to be a copy of this one. Create a fork of this repository
-(I recommend keeping it private) and check it out on your local drive. If not stated otherwise, all the commands and files in
-this guide will assume we're in the root directory of your repository.
+Your cluster will be driven form your own repository, that has to be a copy of this one. Create a fork of this
+repository (I recommend keeping it private) and check it out on your local drive. If not stated otherwise, all
+the commands and files in this guide will assume we're in the root directory of your repository.
 
 ### 3. Bootstrapping the cloud infrastructure
 
-Before you start creating any infrastructure, you need to register a new account with Oracle Cloud. You need to have a valid credit
-card to register, even though the whole setup here is tailored to not use any paid resources and max out the free tier the OCI offers.
+Before you start creating any infrastructure, you need to register a new account with Oracle Cloud. You need
+to have a valid credit card to register, even though the whole setup here is tailored to not use any paid
+resources and max out the free tier the OCI offers.
 
-Go to <https://signup.oraclecloud.com/> and create a new account. Some services, especially related to Kubernetes, are not included
-in the free tier, but are still available to be used for free. Do be able to use them, you have to upgrade your billing tier. Go to
-your [billing settings](https://cloud.oracle.com/invoices-and-orders/upgrade-and-payment), then click on "Add card" and "upgrade your account".
-Once again, all the resource we use are available (at the time of writing and ofr the last at least a year) for free. Now you have to wait until
-your billing tier change is processed.
+Go to <https://signup.oraclecloud.com/> and create a new account. Some services, especially related to
+Kubernetes, are not included in the free tier, but are still available to be used for free. Do be able to use
+them, you have to upgrade your billing tier. Go to your
+[billing settings](https://cloud.oracle.com/invoices-and-orders/upgrade-and-payment), then click on "Add card"
+and "upgrade your account". Once again, all the resource we use are available (at the time of writing and ofr
+the last at least a year) for free. Now you have to wait until your billing tier change is processed.
 
 #### 3.1. Creating the infrastructure
 
@@ -62,21 +73,27 @@ In your terminal, run:
 oci setup config
 ```
 
-This will guide you through the process of setting up CLI access to OCI infrastructure. Read the documents printed by the `setup` command
-to learn where to find necessary input data.
+This will guide you through the process of setting up CLI access to OCI infrastructure. Read the documents
+printed by the `setup` command to learn where to find necessary input data.
 
-Next, go to the `tf/` directory in the repository and fill in information about your cloud account.
-Copy the template settings file `cp variables-private.tf.tpl variables-private.tf` and edit it:
+Next, go to the `tf/` directory in the repository and fill in information about your cloud account. Copy the
+template settings file `cp variables-private.tf.tpl variables-private.tf` and edit it:
 
 - insert your public SSH key as the `default` value for `ssh_public_key`
-- enter 'bastion allowed IPs', these are the IP addresses allowed to connect to the bastion host created for the cluster nodes
-- enter your default `compartment ID` - [here's how to find it](https://docs.oracle.com/en-us/iaas/Content/GSG/Tasks/contactingsupport_topic-Locating_Oracle_Cloud_Infrastructure_IDs.htm)
+- enter 'bastion allowed IPs', these are the IP addresses allowed to connect to the bastion host created for
+  the cluster nodes
+- enter your default `compartment ID` -
+  [here's how to find it](https://docs.oracle.com/en-us/iaas/Content/GSG/Tasks/contactingsupport_topic-Locating_Oracle_Cloud_Infrastructure_IDs.htm)
 - enter your region and 2 Availability Domains within it
 - don't enter `git_token`, as we want this value to be secret (don't save it on your hard drive).
 
-Also set the URL of your repository as the `spec.sync.url` field in `flux/flux-system/flux-instance.yaml` - this is the single source of truth Flux (and the bootstrap) use to know where to sync from.
+Also set the URL of your repository as the `spec.sync.url` field in `flux/flux-system/flux-instance.yaml` -
+this is the single source of truth Flux (and the bootstrap) use to know where to sync from.
 
-Now, go to [github.com profile page](https://github.com/settings/profile) and generate a fine-grained private access token (PAT) with `repo` scope (Read and Write access to code). Here are [more details](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens). Copy the token and paste it into the `variables-private.tf` file as the `git_token` value.
+Now, go to [github.com profile page](https://github.com/settings/profile) and generate a fine-grained private
+access token (PAT) with `repo` scope (Read and Write access to code). Here are
+[more details](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
+Copy the token and paste it into the `variables-private.tf` file as the `git_token` value.
 
 Export the PAT as environment variable
 
@@ -84,7 +101,8 @@ Export the PAT as environment variable
  export GH_TOKEN=YOUR_PAT
 ```
 
-It's time to run `tofu` to bootstrap our cluster and obtain a `kube.config` file for it. Be patient, the first `apply` step can take pretty long (around half an hour):
+It's time to run `tofu` to bootstrap our cluster and obtain a `kube.config` file for it. Be patient, the first
+`apply` step can take pretty long (around half an hour):
 
 ```sh
 tofu init
@@ -101,16 +119,18 @@ kubectl get nodes
 
 ### 4. Bootstrapping the GitOps setup
 
-While waiting for the infrastructure to be created, we can start filling in configuration necessary to set up Flux on our cluster.
+While waiting for the infrastructure to be created, we can start filling in configuration necessary to set up
+Flux on our cluster.
 
 #### 4.1. Generating GPG key and configuring sops
 
-First, we have to configure an encryption tool, that will help us to store all the secrets in the repository in an encrypted form, but one
-that is still automatically decrypted on the cluster.
+First, we have to configure an encryption tool, that will help us to store all the secrets in the repository
+in an encrypted form, but one that is still automatically decrypted on the cluster.
 
 Switch to the repo root folder.
 
-If you don't have a ready GPG key, [here's a more detailed manual by GitHub about how to create one](https://docs.github.com/en/authentication/managing-commit-signature-verification/).
+If you don't have a ready GPG key,
+[here's a more detailed manual by GitHub about how to create one](https://docs.github.com/en/authentication/managing-commit-signature-verification/).
 
 If you just want a kick-start, generate a new key with
 
@@ -118,8 +138,9 @@ If you just want a kick-start, generate a new key with
 gpg --full-generate-key
 ```
 
-Save its key fingerprint that is printed out when the key is ready (and remove space between all the 4-characters blocks). We will use your GPG key
-with `sops` tool, that will encrypt the secrets for use with Flux. Now, copy the `sops` config from template:
+Save its key fingerprint that is printed out when the key is ready (and remove space between all the
+4-characters blocks). We will use your GPG key with `sops` tool, that will encrypt the secrets for use with
+Flux. Now, copy the `sops` config from template:
 
 ```sh
 cp .sops.yaml.tpl .sops.yaml
@@ -139,16 +160,17 @@ kubectl create secret generic sops-gpg \
 
 #### 4.2. Create a slack profile
 
-This step is not really necessary, but it's very useful. Here we'll create a free slack profile, where we can receive notifications
-from Flux and from our monitoring setup. Slack notifications are pretty easy to set up and still can be completely free, but obviously feel
-free to change this step later.
+This step is not really necessary, but it's very useful. Here we'll create a free slack profile, where we can
+receive notifications from Flux and from our monitoring setup. Slack notifications are pretty easy to set up
+and still can be completely free, but obviously feel free to change this step later.
 
-First, [create a new slack profile](https://slack.com/get-started#/createnew). Then, create and save slack's webhook URL using [this instruction](https://api.slack.com/messaging/webhooks).
+First, [create a new slack profile](https://slack.com/get-started#/createnew). Then, create and save slack's
+webhook URL using [this instruction](https://api.slack.com/messaging/webhooks).
 
 #### 4.3. Preparing secrets
 
-In the configuration repo, there are many secrets needed, usually passwords to different applications deployed. All files that need editing and filling in
-some secrets have file names ending with `.tpl.enc`.
+In the configuration repo, there are many secrets needed, usually passwords to different applications
+deployed. All files that need editing and filling in some secrets have file names ending with `.tpl.enc`.
 
 For each such file (see list below), you have to repeat the same procedure:
 
@@ -160,22 +182,26 @@ For each such file (see list below), you have to repeat the same procedure:
 
 You need to process the following files with secrets:
 
-- ./flux-modules/flux-system-extra/github-api-token-secret.yaml.tpl.enc - paste your GitHub PAT again, so Flux can report back the status of your commits
-- ./flux-modules/flux-system-extra/slack-flux-notification-url-secret.yaml.tpl.enc - enter here the Slack webhook you created earlier
+- ./flux-modules/flux-system-extra/github-api-token-secret.yaml.tpl.enc - paste your GitHub PAT again, so Flux
+  can report back the status of your commits
+- ./flux-modules/flux-system-extra/slack-flux-notification-url-secret.yaml.tpl.enc - enter here the Slack
+  webhook you created earlier
 - ./flux-modules/monitoring/alertmanager-slack-api-secret.yaml.tpl.enc - again, include the Slack webhook URL
-- ./flux-modules/monitoring/prom-stack-grafana-pass-secret.yaml.tpl.enc - create a user password for the Grafana web UI
+- ./flux-modules/monitoring/prom-stack-grafana-pass-secret.yaml.tpl.enc - create a user password for the
+  Grafana web UI
 
 **Optional:** If you want to enable `external-dns` for automatic DNS record management via Cloudflare:
 
-1. Copy `flux-modules/kube-system/external-dns-secret.yaml.tmpl` to `flux-modules/kube-system/external-dns-secret.yaml`
+1. Copy `flux-modules/kube-system/external-dns-secret.yaml.tmpl` to
+   `flux-modules/kube-system/external-dns-secret.yaml`
 2. Fill in your Cloudflare API token as the base64-encoded value of `apiKey`
 3. Encrypt the file: `sops -i -e flux-modules/kube-system/external-dns-secret.yaml`
 4. Uncomment `external-dns-secret.yaml` in `flux-modules/kube-system/kustomization.yaml`
 5. Edit `domainFilters` in `flux-modules/kube-system/external-dns-helmrelease.yaml` to set your domain
 6. Add the annotation `external-dns: "enabled"` to any `HTTPRoute` you want DNS records created for
 
-Additionally, you have to edit `postBuild` section of a few files to give information like your DNS name for hosting the cluster or admin's email address (required for
-`letsencrypt`). The files you need to edit are:
+Additionally, you have to edit `postBuild` section of a few files to give information like your DNS name for
+hosting the cluster or admin's email address (required for `letsencrypt`). The files you need to edit are:
 
 - flux-modules/flux-system-extra/kustomization-flux-system-extra.yaml
 - flux-modules/kube-system-extra/kustomization-kube-system-extra.yaml
@@ -185,9 +211,13 @@ Additionally, you have to edit `postBuild` section of a few files to give inform
 
 #### 4.4. Bootstrap Flux
 
-Start by reading the [official documentation about bootstrapping Flux with Flux Operator](https://fluxcd.control-plane.io/operator/).
+Start by reading the
+[official documentation about bootstrapping Flux with Flux Operator](https://fluxcd.control-plane.io/operator/).
 
-Flux is bootstrapped by the [`flux-operator-bootstrap` module](https://github.com/controlplaneio-fluxcd/terraform-kubernetes-flux-operator-bootstrap), which runs an ephemeral in-cluster Job that installs the Flux Operator and applies the `FluxInstance`, then hands ownership over to Flux. A single `tofu apply` does everything - no separate targeted step is needed:
+Flux is bootstrapped by the
+[`flux-operator-bootstrap` module](https://github.com/controlplaneio-fluxcd/terraform-kubernetes-flux-operator-bootstrap),
+which runs an ephemeral in-cluster Job that installs the Flux Operator and applies the `FluxInstance`, then
+hands ownership over to Flux. A single `tofu apply` does everything - no separate targeted step is needed:
 
 ```sh
 # run from the tf/ directory
@@ -206,10 +236,12 @@ should show you that the `flux-operator` deployment is up and running (`Ready: 1
 kubectl -n flux-system get fluxinstance
 ```
 
-should show the `flux` instance becoming `Ready`. Flux will then deploy all the applications from your GitOps repository.
+should show the `flux` instance becoming `Ready`. Flux will then deploy all the applications from your GitOps
+repository.
 
-Make sure that the `tofu` run is complete. Now, you can commit everything into your GitOps repository and push the changes, adding all the created terraform and \*.yaml
-files to your repo. Check that all the files are in, especially `tofu` state files:
+Make sure that the `tofu` run is complete. Now, you can commit everything into your GitOps repository and push
+the changes, adding all the created terraform and \*.yaml files to your repo. Check that all the files are in,
+especially `tofu` state files:
 
 - tf/terraform.tfstate
 - tf/terraform.tfstate.backup
@@ -221,7 +253,8 @@ git commit -am "cluster bootstrap commit"
 git push
 ```
 
-Your work should be done now! From now on, Flux takes over and adjusts your cluster configuration exactly as in your GitOps repository on GitHub.
+Your work should be done now! From now on, Flux takes over and adjusts your cluster configuration exactly as
+in your GitOps repository on GitHub.
 
 You can check the status of the most important object by running the following commands:
 
@@ -232,19 +265,22 @@ kubectl get kustomization -A
 
 ### 5. Next steps
 
-Your cluster is ready. Now you can either forget about the repository you cloned (not recommended, but totally possible) and modify your repository however
-you like. Or you can read on [keeping track and contributing back](#synchronizing-with-source-repository-and-providing-pull-requests).
+Your cluster is ready. Now you can either forget about the repository you cloned (not recommended, but totally
+possible) and modify your repository however you like. Or you can read on
+[keeping track and contributing back](#synchronizing-with-source-repository-and-providing-pull-requests).
 
 ## Configuring the repository to run automatic Flux upgrade job
 
 ## Synchronizing with source repository and providing pull requests
 
-After you bootstrap your own repository, you can forget about the one you forked it from. Still, it is beneficial to be able to get upstream changes,
-including new versions and new modules. Below is information useful in tracking and contributing to the upstream repository.
+After you bootstrap your own repository, you can forget about the one you forked it from. Still, it is
+beneficial to be able to get upstream changes, including new versions and new modules. Below is information
+useful in tracking and contributing to the upstream repository.
 
 ### Fetching changes from the upstream repository
 
-It is recommended to setup additional git source repository, then fetch and merge the changes with your selected branch:
+It is recommended to setup additional git source repository, then fetch and merge the changes with your
+selected branch:
 
 ```sh
 git remote add upstream https://github.com/piontec/free-oci-kubernetes.git  # run only once, if you don't have the upstream definition yet
@@ -252,13 +288,13 @@ git fetch upstream main
 git merge upstream/main
 ```
 
-Now you might need to resolve any potential merge conflicts. Once that's done, review the changes and you should be ready to push them to your branch for
-Flux to pick-up.
+Now you might need to resolve any potential merge conflicts. Once that's done, review the changes and you
+should be ready to push them to your branch for Flux to pick-up.
 
 ### Preparing pull requests
 
-It's best if you prepare a small and scoped PR. Please make also sure, that your code complies to `pre-commit` linting tests. To make it run automatically
-for you, install [pre-commit](https://pre-commit.com/), then run:
+It's best if you prepare a small and scoped PR. Please make also sure, that your code complies to `pre-commit`
+linting tests. To make it run automatically for you, install [pre-commit](https://pre-commit.com/), then run:
 
 ```txt
 pre-commit install --install-hooks
