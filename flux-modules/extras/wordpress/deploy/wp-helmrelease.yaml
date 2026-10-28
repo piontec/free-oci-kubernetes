@@ -57,6 +57,13 @@ spec:
       enabled: true
       serviceMonitor:
         enabled: true
+      resources:
+        limits:
+          cpu: 30m
+          memory: 32Mi
+        requests:
+          cpu: 20m
+          memory: 25Mi
     mariadb:
       enabled: false
     externalDatabase:

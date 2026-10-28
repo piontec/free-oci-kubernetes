@@ -47,8 +47,8 @@ spec:
               type: Unconfined
       containers:
         - name: wireguard
-          image: linuxserver/wireguard:v1.0.20210914-ls22
-          imagePullPolicy: IfNotPresent
+          image: linuxserver/wireguard:1.0.20210914
+          imagePullPolicy: Always
           env:
             - name: PUID
               value: "1000"

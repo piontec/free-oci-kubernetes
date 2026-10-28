@@ -4,7 +4,15 @@ echo "Checking tools"
 which oci 2>&1 1>/dev/null
 if [[ $? -eq 1 ]]; then
 	echo "Installing tools..."
-	dnf install jq python36-oci-cli -yq
+	. /etc/os-release
+	if [[ "${VERSION_ID%%.*}" == "8" ]]; then
+		dnf install jq python36-oci-cli -yq
+	else
+		# OL9+ needs the developer repo for a newer python oci-cli; OL10 will need its own package names
+		dnf install oraclelinux-developer-release-el9 -yq
+		dnf install jq python39-oci-cli --enablerepo=ol9_developer -yq
+	fi
+	which oci >/dev/null 2>&1 || { echo "oci CLI install failed. Exiting."; exit 1; }
 else
 	echo "Tools found."
 fi

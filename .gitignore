@@ -1,1 +1,4 @@
 tf/.terraform
+tf/.kube.config
+tf/terraform.tfstate.[0-9]*.backup
+tmp/

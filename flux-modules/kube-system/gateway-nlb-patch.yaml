@@ -1,0 +1,12 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: cilium-gw
+  namespace: kube-system
+spec:
+  infrastructure:
+    annotations:
+      oci.oraclecloud.com/load-balancer-type: "nlb"
+      oci-network-load-balancer.oraclecloud.com/security-list-management-mode: "All"
+      # Optional: restrict NLB to specific NSGs. Uncomment and set your NSG OCIDs.
+      # oci-network-load-balancer.oraclecloud.com/oci-network-security-groups: "ocid1.networksecuritygroup.oc1..YOUR_NSG_OCID"
